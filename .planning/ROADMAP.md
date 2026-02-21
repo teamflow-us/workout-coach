@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Validation and Foundation** - Resolve unknowns, stand up backend and database
 - [x] **Phase 2: AI Coaching Loop** - Working AI coach with gym-ready workout interface
-- [ ] **Phase 3: RAG Pipeline** - Import training history and give the AI persistent memory
+- [x] **Phase 3: RAG Pipeline** - Import training history and give the AI persistent memory
 - [ ] **Phase 4: Progress, Diet, and Deploy** - Charts, diet guidance, and ship it
 
 ## Phase Details
@@ -64,7 +64,7 @@ Plans:
 
 Plans:
 - [x] 03-01-PLAN.md -- ChromaDB client, RAG utilities, and Gemini history import with session-level chunking
-- [ ] 03-02-PLAN.md -- RAG-augmented system prompt, write-back hooks, and Sources UI on chat messages
+- [x] 03-02-PLAN.md -- RAG-augmented system prompt, write-back hooks, and Sources UI on chat messages
 
 ### Phase 4: Progress, Diet, and Deploy
 **Goal**: User can track their progress over time, get diet guidance, and access the app from any device
@@ -91,5 +91,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 |-------|---------------|--------|-----------|
 | 1. Validation and Foundation | 2/2 | Complete | 2026-02-21 |
 | 2. AI Coaching Loop | 2/2 | Complete | 2026-02-21 |
-| 3. RAG Pipeline | 1/2 | In progress | - |
+| 3. RAG Pipeline | 2/2 | Complete | 2026-02-21 |
 | 4. Progress, Diet, and Deploy | 0/2 | Not started | - |
