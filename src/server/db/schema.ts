@@ -19,6 +19,7 @@ export const exercises = sqliteTable('exercises', {
     .references(() => workouts.id),
   name: text('name').notNull(),
   order: integer('order').notNull(),
+  restSeconds: integer('rest_seconds'), // rest between sets in seconds
 })
 
 export const sets = sqliteTable('sets', {
@@ -31,6 +32,24 @@ export const sets = sqliteTable('sets', {
   weight: real('weight'),
   rpe: real('rpe'),
   notes: text('notes'),
+})
+
+export const messages = sqliteTable('messages', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  role: text('role').notNull(), // 'user' | 'model'
+  content: text('content').notNull(),
+  workoutId: integer('workout_id').references(() => workouts.id), // nullable - linked if workout was generated
+  createdAt: text('created_at').notNull().default(sql`(CURRENT_TIMESTAMP)`),
+})
+
+export const coachingProfiles = sqliteTable('coaching_profiles', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  maxes: text('maxes').notNull().default('{}'), // JSON: { "bench": 225, "squat": 315, ... }
+  injuries: text('injuries').notNull().default('[]'), // JSON: ["left shoulder impingement"]
+  equipment: text('equipment').notNull().default('[]'), // JSON: ["barbell", "dumbbells", "cable machine"]
+  dietaryConstraints: text('dietary_constraints').notNull().default('[]'), // JSON: ["gluten-free"]
+  preferences: text('preferences').notNull().default('{}'), // JSON: { "daysPerWeek": 4, "sessionMinutes": 60 }
+  updatedAt: text('updated_at').notNull().default(sql`(CURRENT_TIMESTAMP)`),
 })
 
 // ---------- Relations ----------
@@ -51,5 +70,12 @@ export const setsRelations = relations(sets, ({ one }) => ({
   exercise: one(exercises, {
     fields: [sets.exerciseId],
     references: [exercises.id],
+  }),
+}))
+
+export const messagesRelations = relations(messages, ({ one }) => ({
+  workout: one(workouts, {
+    fields: [messages.workoutId],
+    references: [workouts.id],
   }),
 }))
