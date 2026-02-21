@@ -1,35 +1,37 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import Chat from './components/Chat'
 
-interface HealthResponse {
-  status: string
-  timestamp: string
-}
+type Tab = 'chat' | 'workout'
 
 export default function App() {
-  const [health, setHealth] = useState<HealthResponse | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    fetch('/api/health')
-      .then((res) => res.json())
-      .then((data) => setHealth(data))
-      .catch((err) => setError(err.message))
-  }, [])
+  const [activeTab, setActiveTab] = useState<Tab>('chat')
 
   return (
-    <div style={{ fontFamily: 'system-ui, sans-serif', padding: '2rem' }}>
-      <h1>William Workout</h1>
-      <p>AI-powered workout coaching</p>
+    <div className="app-container">
+      <div className="tab-bar">
+        <button
+          className={`tab-button${activeTab === 'chat' ? ' active' : ''}`}
+          onClick={() => setActiveTab('chat')}
+        >
+          Chat
+        </button>
+        <button
+          className={`tab-button${activeTab === 'workout' ? ' active' : ''}`}
+          onClick={() => setActiveTab('workout')}
+        >
+          Workout
+        </button>
+      </div>
 
-      <h2>API Status</h2>
-      {error && <p style={{ color: 'red' }}>Error: {error}</p>}
-      {health ? (
-        <p style={{ color: 'green' }}>
-          Server: {health.status} (as of {health.timestamp})
-        </p>
-      ) : (
-        !error && <p>Checking server health...</p>
-      )}
+      <div className="tab-content">
+        {activeTab === 'chat' && <Chat />}
+        {activeTab === 'workout' && (
+          <div className="workout-placeholder">
+            <h2>Workout View</h2>
+            <p>Coming in Plan 02 -- the active workout display with rest timer and gym UX</p>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

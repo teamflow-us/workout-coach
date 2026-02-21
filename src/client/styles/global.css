@@ -1,0 +1,297 @@
+/* Mobile-first variables */
+:root {
+  --color-bg: #0a0a0a;
+  --color-surface: #1a1a1a;
+  --color-surface-elevated: #2a2a2a;
+  --color-text: #f0f0f0;
+  --color-text-muted: #888;
+  --color-accent: #4a9eff;
+  --color-accent-dim: #2a5a9a;
+  --color-success: #4caf50;
+  --color-warning: #ff9800;
+  --color-danger: #f44336;
+
+  --tap-target: 48px;      /* Minimum 48px for gym gloves */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  --font-size-sm: 14px;
+  --font-size-md: 16px;    /* Minimum for mobile readability */
+  --font-size-lg: 20px;
+  --font-size-xl: 28px;
+  --font-size-timer: 64px; /* Rest timer display */
+
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-size: var(--font-size-md);
+  background: var(--color-bg);
+  color: var(--color-text);
+  -webkit-text-size-adjust: 100%;
+}
+
+#root {
+  height: 100%;
+}
+
+/* App layout */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh; /* Dynamic viewport height - accounts for mobile keyboard */
+}
+
+/* Tab bar */
+.tab-bar {
+  display: flex;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-surface-elevated);
+  flex-shrink: 0;
+}
+
+.tab-button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap-target);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.tab-button.active {
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+}
+
+/* Tab content area */
+.tab-content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Chat layout - full height minus tab bar and input */
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-md);
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.chat-messages-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-lg);
+  text-align: center;
+  padding: var(--spacing-xl);
+}
+
+/* Chat message bubbles */
+.chat-message {
+  max-width: 85%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius);
+  word-wrap: break-word;
+  line-height: 1.5;
+}
+
+.chat-message.user {
+  align-self: flex-end;
+  background: var(--color-accent-dim);
+  color: var(--color-text);
+  border-bottom-right-radius: var(--spacing-xs);
+}
+
+.chat-message.model {
+  align-self: flex-start;
+  background: var(--color-surface-elevated);
+  color: var(--color-text);
+  border-bottom-left-radius: var(--spacing-xs);
+}
+
+.chat-message-time {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin-top: var(--spacing-xs);
+  opacity: 0.7;
+}
+
+.chat-message.user .chat-message-time {
+  text-align: right;
+}
+
+/* Streaming indicator */
+.streaming-indicator {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.streaming-indicator .dot {
+  width: 6px;
+  height: 6px;
+  background: var(--color-accent);
+  border-radius: 50%;
+  animation: pulse-dot 1.2s infinite ease-in-out;
+}
+
+.streaming-indicator .dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.streaming-indicator .dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes pulse-dot {
+  0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+  40% { opacity: 1; transform: scale(1); }
+}
+
+/* Chat input bar */
+.chat-input-bar {
+  display: flex;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-surface-elevated);
+  flex-shrink: 0;
+}
+
+.chat-input {
+  flex: 1;
+  min-height: var(--tap-target);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-md);
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-surface-elevated);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  outline: none;
+  resize: none;
+  transition: border-color 0.15s;
+}
+
+.chat-input:focus {
+  border-color: var(--color-accent);
+}
+
+.chat-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+/* Tap targets - minimum 48px for gym use with gloves */
+button, .tap-target {
+  min-height: var(--tap-target);
+  min-width: var(--tap-target);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-md);
+  font-family: inherit;
+  border-radius: var(--radius-sm);
+  border: none;
+  cursor: pointer;
+  touch-action: manipulation; /* Prevent double-tap zoom */
+}
+
+.btn-primary {
+  background: var(--color-accent);
+  color: white;
+  font-weight: 600;
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: var(--color-surface-elevated);
+  color: var(--color-text);
+}
+
+.btn-workout {
+  background: var(--color-success);
+  color: white;
+  font-weight: 600;
+  width: 100%;
+  margin-bottom: var(--spacing-sm);
+}
+
+/* Rest timer - large, centered, readable at arm's length */
+.rest-timer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-timer);
+  font-variant-numeric: tabular-nums; /* Fixed-width digits prevent layout shift */
+  font-weight: 700;
+  padding: var(--spacing-xl);
+}
+
+/* Workout placeholder */
+.workout-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--color-text-muted);
+  padding: var(--spacing-xl);
+  text-align: center;
+  gap: var(--spacing-md);
+}
+
+.workout-placeholder h2 {
+  font-size: var(--font-size-lg);
+}
+
+/* Desktop enhancement (mobile-first: styles above are the base) */
+@media (min-width: 768px) {
+  .app-container {
+    max-width: 600px;
+    margin: 0 auto;
+    border-left: 1px solid var(--color-surface-elevated);
+    border-right: 1px solid var(--color-surface-elevated);
+  }
+
+  .chat-message {
+    max-width: 70%;
+  }
+}

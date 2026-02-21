@@ -1,0 +1,92 @@
+import { useState, useRef, useEffect } from 'react'
+import { useChat } from '../hooks/useChat'
+import ChatMessage from './ChatMessage'
+
+export default function Chat() {
+  const { messages, sendMessage, generateWorkout, isStreaming } = useChat()
+  const [input, setInput] = useState('')
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  // Auto-scroll to bottom on new messages
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
+  const handleSend = () => {
+    if (!input.trim() || isStreaming) return
+    sendMessage(input.trim())
+    setInput('')
+    // Re-focus input after sending
+    inputRef.current?.focus()
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSend()
+    }
+  }
+
+  const handleGenerateWorkout = () => {
+    if (isStreaming) return
+    generateWorkout('Generate a workout for today based on my training history and goals')
+  }
+
+  return (
+    <div className="chat-container">
+      <div className="chat-messages">
+        {messages.length === 0 ? (
+          <div className="chat-messages-empty">
+            Start a conversation with your AI coach
+          </div>
+        ) : (
+          messages.map((msg, idx) => (
+            <ChatMessage
+              key={idx}
+              role={msg.role}
+              text={msg.text}
+              timestamp={msg.timestamp}
+              isStreaming={
+                isStreaming && idx === messages.length - 1 && msg.role === 'model'
+              }
+            />
+          ))
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+
+      <div className="chat-input-bar">
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: 'var(--spacing-sm)' }}>
+          <button
+            className="btn-workout tap-target"
+            onClick={handleGenerateWorkout}
+            disabled={isStreaming}
+          >
+            Generate Workout
+          </button>
+          <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+            <input
+              ref={inputRef}
+              className="chat-input"
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={isStreaming ? 'AI is responding...' : 'Message your coach...'}
+              disabled={isStreaming}
+              autoComplete="off"
+            />
+            <button
+              className="btn-primary tap-target"
+              onClick={handleSend}
+              disabled={!input.trim() || isStreaming}
+            >
+              Send
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
