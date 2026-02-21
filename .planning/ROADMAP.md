@@ -45,11 +45,11 @@ Plans:
   3. User can log completed sets via freeform text and provide workout feedback in natural language
   4. Rest timer counts down between sets during a workout
   5. The entire interface is usable on a phone screen at the gym (mobile-first, large tap targets)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 02-01: Chat interface and Gemini integration
-- [ ] 02-02: Workout view, logging, and gym UX
+- [ ] 02-01-PLAN.md -- Chat interface, Gemini streaming, workout generation, freeform logging, and all backend API routes
+- [ ] 02-02-PLAN.md -- Workout view, rest timer, wake lock, profile editor, and gym-ready mobile UX
 
 ### Phase 3: RAG Pipeline
 **Goal**: The AI remembers the user's full training history and gets smarter with every workout
