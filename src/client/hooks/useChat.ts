@@ -33,6 +33,7 @@ interface GenerateWorkoutResponse {
     max: number
     issue: string
   }>
+  sources?: Array<{ date: string; snippet: string; score: number }>
 }
 
 export function useChat() {
@@ -231,6 +232,7 @@ export function useChat() {
           role: 'model',
           text: `Generated **${data.plan.programName}**:\n\n${exerciseList}${data.plan.notes ? `\n\n${data.plan.notes}` : ''}${data.warnings.length > 0 ? `\n\nWarnings:\n${data.warnings.map((w) => `- ${w.issue}`).join('\n')}` : ''}`,
           timestamp: Date.now(),
+          sources: data.sources ?? [],
         }
         setMessages((prev) => [...prev, aiMsg])
 
