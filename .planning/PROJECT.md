@@ -58,6 +58,7 @@ The AI coaching loop must work: give feedback on a workout in natural language, 
 | RAG over fine-tuning | RAG allows incremental knowledge updates as new workouts happen, no retraining needed | — Pending |
 | Single user, no auth | Personal tool — simplifies architecture significantly | — Pending |
 | Deployed web app | Need phone access during workouts at the gym | — Pending |
+| ChromaDB as vector store | User preference — established, well-documented vector DB with good Python/JS ecosystem | — Pending |
 
 ---
-*Last updated: 2026-02-21 after initialization*
+*Last updated: 2026-02-21 after roadmap creation*

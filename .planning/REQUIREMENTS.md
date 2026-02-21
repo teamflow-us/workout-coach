@@ -8,7 +8,7 @@
 ### Pre-Build Validation
 
 - [ ] **VALID-01**: Export existing Gemini conversation and measure token count
-- [ ] **VALID-02**: Test Gemini File Search + structured JSON output composition
+- [ ] **VALID-02**: Test ChromaDB + Gemini embedding pipeline and structured JSON output composition
 - [ ] **VALID-03**: Determine RAG strategy (context stuffing / hybrid / full RAG) based on data volume
 
 ### AI Coaching
@@ -118,13 +118,13 @@
 | DIET-03 | Phase 2 | Pending |
 | INFRA-01 | Phase 1 | Pending |
 | INFRA-02 | Phase 1 | Pending |
-| INFRA-03 | Phase 5 | Pending |
+| INFRA-03 | Phase 4 | Pending |
 
 **Coverage:**
 - v1 requirements: 27 total
 - Mapped to phases: 27
-- Unmapped: 0 ✓
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-21*
-*Last updated: 2026-02-21 after initial definition*
+*Last updated: 2026-02-21 after roadmap creation*
