@@ -7,9 +7,9 @@
 
 ### Pre-Build Validation
 
-- [ ] **VALID-01**: Export existing Gemini conversation and measure token count
-- [ ] **VALID-02**: Test ChromaDB + Gemini embedding pipeline and structured JSON output composition
-- [ ] **VALID-03**: Determine RAG strategy (context stuffing / hybrid / full RAG) based on data volume
+- [x] **VALID-01**: Export existing Gemini conversation and measure token count
+- [x] **VALID-02**: Test ChromaDB + Gemini embedding pipeline and structured JSON output composition
+- [x] **VALID-03**: Determine RAG strategy (context stuffing / hybrid / full RAG) based on data volume
 
 ### AI Coaching
 
@@ -49,8 +49,8 @@
 
 ### Infrastructure
 
-- [ ] **INFRA-01**: Backend API (Hono) with Gemini API key secured server-side
-- [ ] **INFRA-02**: SQLite database for structured workout data
+- [x] **INFRA-01**: Backend API (Hono) with Gemini API key secured server-side
+- [x] **INFRA-02**: SQLite database for structured workout data
 - [ ] **INFRA-03**: Deployed web app accessible from phone/browser
 
 ## v2 Requirements
@@ -92,9 +92,9 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| VALID-01 | Phase 1 | Pending |
-| VALID-02 | Phase 1 | Pending |
-| VALID-03 | Phase 1 | Pending |
+| VALID-01 | Phase 1 | Complete |
+| VALID-02 | Phase 1 | Complete |
+| VALID-03 | Phase 1 | Complete |
 | COACH-01 | Phase 2 | Pending |
 | COACH-02 | Phase 2 | Pending |
 | COACH-03 | Phase 2 | Pending |
@@ -116,8 +116,8 @@
 | DIET-01 | Phase 4 | Pending |
 | DIET-02 | Phase 4 | Pending |
 | DIET-03 | Phase 2 | Pending |
-| INFRA-01 | Phase 1 | Pending |
-| INFRA-02 | Phase 1 | Pending |
+| INFRA-01 | Phase 1 | Complete |
+| INFRA-02 | Phase 1 | Complete |
 | INFRA-03 | Phase 4 | Pending |
 
 **Coverage:**
