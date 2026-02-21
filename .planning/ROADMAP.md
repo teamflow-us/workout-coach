@@ -33,7 +33,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 Plans:
 - [ ] 01-01-PLAN.md -- Pre-build validation: export Gemini conversation, measure tokens, test ChromaDB + embeddings pipeline
-- [ ] 01-02-PLAN.md -- Backend and database foundation: Hono server, SQLite/Drizzle schema, workout CRUD API, React shell
+- [x] 01-02-PLAN.md -- Backend and database foundation: Hono server, SQLite/Drizzle schema, workout CRUD API, React shell
 
 ### Phase 2: AI Coaching Loop
 **Goal**: User can chat with an AI coach, receive a structured workout, and use it at the gym on their phone
@@ -89,7 +89,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|---------------|--------|-----------|
-| 1. Validation and Foundation | 0/2 | Not started | - |
+| 1. Validation and Foundation | 1/2 | In progress | - |
 | 2. AI Coaching Loop | 0/2 | Not started | - |
 | 3. RAG Pipeline | 0/2 | Not started | - |
 | 4. Progress, Diet, and Deploy | 0/2 | Not started | - |
