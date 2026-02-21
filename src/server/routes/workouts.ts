@@ -3,6 +3,7 @@ import { eq, desc } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '../db/index.js'
 import { workouts, exercises, sets } from '../db/schema.js'
+import { ai } from '../lib/gemini.js'
 
 const app = new Hono()
 
@@ -138,6 +139,117 @@ app.post('/', async (c) => {
   })
 
   return c.json(result, 201)
+})
+
+// ---------- Freeform Logging Schemas ----------
+
+const logSetSchema = z.object({
+  setNumber: z.number().int(),
+  reps: z.number().int(),
+  weight: z.number(),
+  rpe: z.number().min(1).max(10).optional(),
+})
+
+const logExerciseSchema = z.object({
+  name: z.string(),
+  sets: z.array(logSetSchema),
+})
+
+const logSchema = z.object({
+  exercises: z.array(logExerciseSchema),
+  feedback: z.string().optional(),
+})
+
+/**
+ * POST /:id/log - Freeform text workout logging
+ * Parses natural language workout log into structured data using Gemini
+ */
+app.post('/:id/log', async (c) => {
+  const workoutId = Number(c.req.param('id'))
+
+  if (isNaN(workoutId)) {
+    return c.json({ error: 'Invalid workout ID' }, 400)
+  }
+
+  // Verify workout exists
+  const workout = await db.query.workouts.findFirst({
+    where: eq(workouts.id, workoutId),
+  })
+
+  if (!workout) {
+    return c.json({ error: 'Workout not found' }, 404)
+  }
+
+  let body: { text: string }
+  try {
+    body = await c.req.json()
+  } catch {
+    return c.json({ error: 'Invalid JSON body' }, 400)
+  }
+
+  if (!body.text || typeof body.text !== 'string') {
+    return c.json({ error: 'text is required' }, 400)
+  }
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: `Parse this workout log into structured data. The user said: "${body.text}"`,
+      config: {
+        responseMimeType: 'application/json',
+        responseJsonSchema: z.toJSONSchema(logSchema),
+      },
+    })
+
+    const parsed = logSchema.parse(JSON.parse(response.text!))
+
+    // Update the workout's exercises/sets in the database
+    db.transaction((tx) => {
+      for (const exercise of parsed.exercises) {
+        // Insert or update exercise
+        const insertedExercise = tx
+          .insert(exercises)
+          .values({
+            workoutId,
+            name: exercise.name,
+            order: 1, // will be adjusted if needed
+          })
+          .returning()
+          .get()
+
+        for (const set of exercise.sets) {
+          tx.insert(sets)
+            .values({
+              exerciseId: insertedExercise.id,
+              setNumber: set.setNumber,
+              reps: set.reps,
+              weight: set.weight,
+              rpe: set.rpe ?? null,
+            })
+            .run()
+        }
+      }
+
+      // Update workout feedback if parsed
+      if (parsed.feedback) {
+        tx.update(workouts)
+          .set({ feedback: parsed.feedback })
+          .where(eq(workouts.id, workoutId))
+          .run()
+      }
+    })
+
+    return c.json(parsed)
+  } catch (err) {
+    console.error('Freeform log parsing error:', err)
+    return c.json(
+      {
+        error: 'Failed to parse workout log',
+        details: err instanceof Error ? err.message : 'Unknown error',
+      },
+      500
+    )
+  }
 })
 
 export default app
