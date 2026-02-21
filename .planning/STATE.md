@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-21)
 
 **Core value:** The AI coaching loop must work: give feedback on a workout in natural language, get an intelligently adjusted next workout that reflects your full training history.
-**Current focus:** Phase 2 in progress - AI coaching loop chat and APIs complete, workout view next
+**Current focus:** Phase 2 in progress - workout view, rest timer, profile editor built; awaiting human verification
 
 ## Current Position
 
 Phase: 2 of 4 (AI Coaching Loop)
-Plan: 1 of 2 in current phase
-Status: In progress
-Last activity: 2026-02-21 - Completed 02-01-PLAN.md
+Plan: 2 of 2 in current phase
+Status: Awaiting checkpoint (human-verify)
+Last activity: 2026-02-21 - 02-02-PLAN.md Tasks 1-2 complete, checkpoint pending
 
 Progress: [████░░░░░░] 37%
 
@@ -66,6 +66,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-02-21T21:42:10Z
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-02-21T21:44:55Z
+Stopped at: 02-02-PLAN.md checkpoint (awaiting human-verify)
 Resume file: None
