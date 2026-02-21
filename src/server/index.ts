@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import { serve } from '@hono/node-server'
+import { serveStatic } from '@hono/node-server/serve-static'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import healthRoutes from './routes/health.js'
@@ -21,7 +22,14 @@ app.route('/api/chat', chatRoutes)
 app.route('/api/profile', profileRoutes)
 app.route('/api/rag', ragRoutes)
 
-const port = 3001
+// Serve static client build in production
+app.use('/assets/*', serveStatic({ root: './dist/client' }))
+app.use('/favicon.ico', serveStatic({ root: './dist/client' }))
+
+// SPA fallback: serve index.html for all non-API routes
+app.get('*', serveStatic({ root: './dist/client', path: '/index.html' }))
+
+const port = parseInt(process.env.PORT || '3000', 10)
 
 serve({ fetch: app.fetch, port }, async () => {
   console.log(`Server running on http://localhost:${port}`)

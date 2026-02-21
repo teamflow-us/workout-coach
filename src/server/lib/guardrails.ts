@@ -24,6 +24,8 @@ const EXERCISE_CATEGORIES: Record<string, string[]> = {
     'dumbbell bench',
     'barbell bench',
     'flat bench',
+    'floor press',
+    'barbell floor press',
   ],
   squat: [
     'back squat',

@@ -3,4 +3,7 @@ node_modules/
 data/
 dist/
 *.db
+*.db-wal
+*.db-shm
 chroma-data/
+chroma/

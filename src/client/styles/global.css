@@ -422,6 +422,33 @@ body::before {
   }
 }
 
+.memory-toggle {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 4;
+  min-height: 38px;
+  min-width: 38px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  font-family: 'Chivo Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: color-mix(in srgb, var(--color-surface) 82%, transparent);
+  color: var(--color-text-muted);
+  border: 1px solid var(--line-strong);
+  backdrop-filter: blur(6px);
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.memory-toggle.active {
+  background: var(--color-accent-cool);
+  color: #effcf9;
+  border-color: transparent;
+}
+
 .chat-input-bar {
   display: flex;
   gap: var(--spacing-sm);
@@ -869,6 +896,35 @@ button:disabled {
 
 .profile-add-input::placeholder {
   color: var(--color-text-muted);
+}
+
+.profile-goals {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.profile-goal-tag {
+  justify-content: flex-start;
+  border-radius: var(--radius-sm);
+  width: 100%;
+  text-align: left;
+}
+
+.profile-goal-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-accent-cool);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'Chivo Mono', monospace;
+  margin-right: var(--spacing-sm);
+  flex-shrink: 0;
 }
 
 .profile-save {

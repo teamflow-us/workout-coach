@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import { defineConfig } from 'drizzle-kit'
 
 export default defineConfig({
@@ -5,6 +6,6 @@ export default defineConfig({
   schema: './src/server/db/schema.ts',
   out: './drizzle',
   dbCredentials: {
-    url: 'file:./workout.db',
+    url: `file:${process.env.DB_PATH || './workout.db'}`,
   },
 })

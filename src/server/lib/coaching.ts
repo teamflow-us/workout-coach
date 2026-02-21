@@ -34,6 +34,7 @@ export async function buildSystemPrompt(userMessage?: string): Promise<BuildProm
 
   const profileSection = profile
     ? `## Coaching Profile
+- Biometrics: ${profile.biometrics}
 - Current maxes: ${profile.maxes}
 - Injuries/limitations: ${profile.injuries}
 - Available equipment: ${profile.equipment}

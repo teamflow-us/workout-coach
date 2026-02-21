@@ -17,7 +17,7 @@ const app = new Hono()
 // ---------- POST /send -- Streaming chat via SSE ----------
 
 app.post('/send', async (c) => {
-  let body: { message: string }
+  let body: { message: string; saveToMemory?: boolean }
   try {
     body = await c.req.json()
   } catch {
@@ -84,14 +84,16 @@ app.post('/send', async (c) => {
       ])
 
       // Fire-and-forget write-back: embed the exchange in ChromaDB
-      const combinedText = body.message + ' ' + fullText
-      const meta = extractMetadata(combinedText)
-      embedAndStore(body.message, fullText, {
-        date: new Date().toISOString().split('T')[0],
-        exercises: meta.exercises.join(','),
-        muscleGroups: meta.muscleGroups.join(','),
-        type: 'live-session',
-      }).catch((err) => console.warn('RAG write-back failed:', err))
+      if (body.saveToMemory !== false) {
+        const combinedText = body.message + ' ' + fullText
+        const meta = extractMetadata(combinedText)
+        embedAndStore(body.message, fullText, {
+          date: new Date().toISOString().split('T')[0],
+          exercises: meta.exercises.join(','),
+          muscleGroups: meta.muscleGroups.join(','),
+          type: 'live-session',
+        }).catch((err) => console.warn('RAG write-back failed:', err))
+      }
     } catch (err) {
       console.error('Chat streaming error:', err)
       await stream.writeSSE({
@@ -128,7 +130,7 @@ const workoutPlanSchema = z.object({
 })
 
 app.post('/generate-workout', async (c) => {
-  let body: { prompt: string }
+  let body: { prompt: string; saveToMemory?: boolean }
   try {
     body = await c.req.json()
   } catch {
@@ -217,14 +219,16 @@ app.post('/generate-workout', async (c) => {
     ])
 
     // Fire-and-forget write-back: embed the exchange in ChromaDB
-    const combinedText = body.prompt + ' ' + aiSummary
-    const meta = extractMetadata(combinedText)
-    embedAndStore(body.prompt, aiSummary, {
-      date: new Date().toISOString().split('T')[0],
-      exercises: meta.exercises.join(','),
-      muscleGroups: meta.muscleGroups.join(','),
-      type: 'live-session',
-    }).catch((err) => console.warn('RAG write-back failed:', err))
+    if (body.saveToMemory !== false) {
+      const combinedText = body.prompt + ' ' + aiSummary
+      const meta = extractMetadata(combinedText)
+      embedAndStore(body.prompt, aiSummary, {
+        date: new Date().toISOString().split('T')[0],
+        exercises: meta.exercises.join(','),
+        muscleGroups: meta.muscleGroups.join(','),
+        type: 'live-session',
+      }).catch((err) => console.warn('RAG write-back failed:', err))
+    }
 
     return c.json({
       workout: savedWorkout,

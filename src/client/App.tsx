@@ -6,12 +6,36 @@ import ProfileEditor from './components/ProfileEditor'
 import { useWakeLock } from './hooks/useWakeLock'
 
 type Tab = 'chat' | 'workout' | 'profile'
+type ThemeMode = 'atelier' | 'midnight'
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('chat')
+  const [theme, setTheme] = useState<ThemeMode>(() => {
+    if (typeof window === 'undefined') return 'atelier'
+
+    const storedTheme = window.localStorage.getItem('ww-theme')
+    if (storedTheme === 'atelier' || storedTheme === 'midnight') {
+      document.documentElement.setAttribute('data-theme', storedTheme)
+      return storedTheme
+    }
+
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.documentElement.setAttribute('data-theme', 'midnight')
+      return 'midnight'
+    }
+
+    document.documentElement.setAttribute('data-theme', 'atelier')
+    return 'atelier'
+  })
+  const [saveToMemory, setSaveToMemory] = useState(true)
   const [restTimerSeconds, setRestTimerSeconds] = useState<number | null>(null)
   const [latestWorkoutId, setLatestWorkoutId] = useState<number | null>(null)
   const { request: requestWakeLock, release: releaseWakeLock } = useWakeLock()
+
+  useEffect(() => {
+    window.localStorage.setItem('ww-theme', theme)
+    document.documentElement.setAttribute('data-theme', theme)
+  }, [theme])
 
   // Activate wake lock when Workout tab is active
   useEffect(() => {
@@ -37,11 +61,29 @@ export default function App() {
   }, [])
 
   return (
-    <div className="app-container">
+    <div className="app-container" data-theme={theme}>
+      <button
+        className={`memory-toggle${saveToMemory ? ' active' : ''}`}
+        onClick={() => setSaveToMemory((v) => !v)}
+        type="button"
+        aria-label={saveToMemory ? 'Memory saving is on' : 'Memory saving is off'}
+      >
+        Memory: {saveToMemory ? 'ON' : 'OFF'}
+      </button>
+      <button
+        className="theme-toggle"
+        onClick={() => setTheme(prev => (prev === 'atelier' ? 'midnight' : 'atelier'))}
+        aria-label={theme === 'atelier' ? 'Switch to midnight theme' : 'Switch to atelier theme'}
+      >
+        <span className="theme-toggle-icon" aria-hidden>
+          {theme === 'atelier' ? 'MOON' : 'SUN'}
+        </span>
+      </button>
+
       {/* Tab content area */}
       <div className="tab-content">
         {activeTab === 'chat' && (
-          <Chat onWorkoutGenerated={handleWorkoutGenerated} />
+          <Chat onWorkoutGenerated={handleWorkoutGenerated} saveToMemory={saveToMemory} />
         )}
         {activeTab === 'workout' && (
           <WorkoutView
@@ -66,19 +108,34 @@ export default function App() {
           className={`tab-button${activeTab === 'chat' ? ' active' : ''}`}
           onClick={() => setActiveTab('chat')}
         >
-          Chat
+          <span className="tab-icon" aria-hidden>
+            <svg viewBox="0 0 24 24" role="img">
+              <path d="M4 5h16v10H8l-4 4V5Z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+            </svg>
+          </span>
+          <span className="tab-text">Chat</span>
         </button>
         <button
           className={`tab-button${activeTab === 'workout' ? ' active' : ''}`}
           onClick={() => setActiveTab('workout')}
         >
-          Workout
+          <span className="tab-icon" aria-hidden>
+            <svg viewBox="0 0 24 24" role="img">
+              <path d="M3 10h3v4H3v-4Zm15 0h3v4h-3v-4ZM7 11h10v2H7v-2Zm0-3h2v8H7V8Zm8 0h2v8h-2V8Z" fill="currentColor" />
+            </svg>
+          </span>
+          <span className="tab-text">Workout</span>
         </button>
         <button
           className={`tab-button${activeTab === 'profile' ? ' active' : ''}`}
           onClick={() => setActiveTab('profile')}
         >
-          Profile
+          <span className="tab-icon" aria-hidden>
+            <svg viewBox="0 0 24 24" role="img">
+              <path d="M12 4a4 4 0 1 1 0 8 4 4 0 0 1 0-8Zm0 10c4.42 0 8 2.24 8 5v1H4v-1c0-2.76 3.58-5 8-5Z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+          <span className="tab-text">Profile</span>
         </button>
       </div>
     </div>

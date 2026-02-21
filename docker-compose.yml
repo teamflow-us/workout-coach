@@ -1,0 +1,34 @@
+services:
+  app:
+    build: .
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+      - DB_PATH=/data/workout.db
+      - PORT=3000
+    volumes:
+      - app-data:/data
+    depends_on:
+      chromadb:
+        condition: service_healthy
+    restart: unless-stopped
+
+  chromadb:
+    image: chromadb/chroma:0.6.3
+    volumes:
+      - chroma-data:/chroma/chroma
+    environment:
+      - ANONYMIZED_TELEMETRY=false
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v2/heartbeat"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  app-data:
+  chroma-data:

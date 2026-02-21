@@ -71,7 +71,7 @@ export function useChat() {
     }
   }
 
-  const sendMessage = useCallback(async (text: string) => {
+  const sendMessage = useCallback(async (text: string, saveToMemory?: boolean) => {
     if (!text.trim()) return
 
     // Add user message immediately
@@ -98,7 +98,7 @@ export function useChat() {
       const res = await fetch('/api/chat/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text }),
+        body: JSON.stringify({ message: text, saveToMemory: saveToMemory ?? true }),
         signal: abortRef.current.signal,
       })
 
@@ -197,7 +197,7 @@ export function useChat() {
   }, [])
 
   const generateWorkout = useCallback(
-    async (prompt: string): Promise<GenerateWorkoutResponse | null> => {
+    async (prompt: string, saveToMemory?: boolean): Promise<GenerateWorkoutResponse | null> => {
       try {
         // Add prompt as user message
         const userMsg: ChatMessage = {
@@ -211,7 +211,7 @@ export function useChat() {
         const res = await fetch('/api/chat/generate-workout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt }),
+          body: JSON.stringify({ prompt, saveToMemory: saveToMemory ?? true }),
         })
 
         if (!res.ok) {

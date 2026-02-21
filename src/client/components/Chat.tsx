@@ -4,9 +4,10 @@ import ChatMessage from './ChatMessage'
 
 interface ChatProps {
   onWorkoutGenerated?: (workoutId: number) => void
+  saveToMemory: boolean
 }
 
-export default function Chat({ onWorkoutGenerated }: ChatProps) {
+export default function Chat({ onWorkoutGenerated, saveToMemory }: ChatProps) {
   const { messages, sendMessage, generateWorkout, isStreaming } = useChat()
   const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -19,7 +20,7 @@ export default function Chat({ onWorkoutGenerated }: ChatProps) {
 
   const handleSend = () => {
     if (!input.trim() || isStreaming) return
-    sendMessage(input.trim())
+    sendMessage(input.trim(), saveToMemory)
     setInput('')
     // Re-focus input after sending
     inputRef.current?.focus()
@@ -34,7 +35,7 @@ export default function Chat({ onWorkoutGenerated }: ChatProps) {
 
   const handleGenerateWorkout = async () => {
     if (isStreaming) return
-    const result = await generateWorkout('Generate a workout for today based on my training history and goals')
+    const result = await generateWorkout('Generate a workout for today based on my training history and goals', saveToMemory)
     if (result?.workout?.id && onWorkoutGenerated) {
       onWorkoutGenerated(result.workout.id)
     }

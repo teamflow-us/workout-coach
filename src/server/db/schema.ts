@@ -44,11 +44,12 @@ export const messages = sqliteTable('messages', {
 
 export const coachingProfiles = sqliteTable('coaching_profiles', {
   id: integer('id').primaryKey({ autoIncrement: true }),
-  maxes: text('maxes').notNull().default('{}'), // JSON: { "bench": 225, "squat": 315, ... }
+  biometrics: text('biometrics').notNull().default('{}'), // JSON: { "height": "6'6\"", "weight": 209, "age": 42, "bodyType": "hard-gainer" }
+  maxes: text('maxes').notNull().default('{}'), // JSON: { "floor press": 145, "overhead press": 60, ... }
   injuries: text('injuries').notNull().default('[]'), // JSON: ["left shoulder impingement"]
   equipment: text('equipment').notNull().default('[]'), // JSON: ["barbell", "dumbbells", "cable machine"]
   dietaryConstraints: text('dietary_constraints').notNull().default('[]'), // JSON: ["gluten-free"]
-  preferences: text('preferences').notNull().default('{}'), // JSON: { "daysPerWeek": 4, "sessionMinutes": 60 }
+  preferences: text('preferences').notNull().default('{}'), // JSON: { "daysPerWeek": 4, "sessionMinutes": 60, "goals": [...] }
   updatedAt: text('updated_at').notNull().default(sql`(CURRENT_TIMESTAMP)`),
 })
 

@@ -2,6 +2,12 @@ import { useState, useEffect } from 'react'
 
 interface CoachingProfile {
   id: number | null
+  biometrics: {
+    height?: string
+    weight?: number
+    age?: number
+    bodyType?: string
+  }
   maxes: Record<string, number>
   injuries: string[]
   equipment: string[]
@@ -9,27 +15,33 @@ interface CoachingProfile {
   preferences: {
     daysPerWeek?: number
     sessionMinutes?: number
+    trainingTime?: string
+    goals?: string[]
+    exercisesToAvoid?: string[]
+    communicationStyle?: string
   }
 }
 
 const DEFAULT_EQUIPMENT = [
   'Barbell',
-  'Dumbbells',
-  'Cable Machine',
-  'Pull-up Bar',
+  'Plates (245 lbs total)',
   'Bench',
-  'Squat Rack',
-  'Leg Press',
-  'Smith Machine',
-  'Resistance Bands',
-  'Kettlebells',
+  '4-Post Rack (93")',
+  'Pull-up Bar (multigrip)',
+  'Dip Station',
+  'Push-up Grips',
+  '5 lb Dumbbells',
+  '35 lb Backpack',
+  'Yoga Mat',
+  'Wooden Box',
 ]
 
-const DEFAULT_MAX_LIFTS = ['Bench Press', 'Squat', 'Deadlift', 'Overhead Press']
+const DEFAULT_MAX_LIFTS = ['Floor Press', 'Overhead Press', 'Glute Bridge']
 
 export default function ProfileEditor() {
   const [profile, setProfile] = useState<CoachingProfile>({
     id: null,
+    biometrics: {},
     maxes: {},
     injuries: [],
     equipment: [],
@@ -41,6 +53,8 @@ export default function ProfileEditor() {
   const [saved, setSaved] = useState(false)
   const [newInjury, setNewInjury] = useState('')
   const [newDietary, setNewDietary] = useState('')
+  const [newGoal, setNewGoal] = useState('')
+  const [newAvoid, setNewAvoid] = useState('')
 
   useEffect(() => {
     loadProfile()
@@ -53,6 +67,7 @@ export default function ProfileEditor() {
       const data = await res.json()
       setProfile({
         id: data.id,
+        biometrics: data.biometrics || {},
         maxes: data.maxes || {},
         injuries: data.injuries || [],
         equipment: data.equipment || [],
@@ -74,6 +89,7 @@ export default function ProfileEditor() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          biometrics: profile.biometrics,
           maxes: profile.maxes,
           injuries: profile.injuries,
           equipment: profile.equipment,
@@ -91,6 +107,18 @@ export default function ProfileEditor() {
     } finally {
       setSaving(false)
     }
+  }
+
+  const updateBiometric = (field: string, value: string) => {
+    setProfile(prev => ({
+      ...prev,
+      biometrics: {
+        ...prev.biometrics,
+        [field]: field === 'weight' || field === 'age'
+          ? (parseInt(value, 10) || undefined)
+          : value || undefined,
+      },
+    }))
   }
 
   const updateMax = (lift: string, value: string) => {
@@ -149,6 +177,50 @@ export default function ProfileEditor() {
     }))
   }
 
+  const addGoal = () => {
+    if (!newGoal.trim()) return
+    setProfile(prev => ({
+      ...prev,
+      preferences: {
+        ...prev.preferences,
+        goals: [...(prev.preferences.goals || []), newGoal.trim()],
+      },
+    }))
+    setNewGoal('')
+  }
+
+  const removeGoal = (index: number) => {
+    setProfile(prev => ({
+      ...prev,
+      preferences: {
+        ...prev.preferences,
+        goals: (prev.preferences.goals || []).filter((_, i) => i !== index),
+      },
+    }))
+  }
+
+  const addAvoid = () => {
+    if (!newAvoid.trim()) return
+    setProfile(prev => ({
+      ...prev,
+      preferences: {
+        ...prev.preferences,
+        exercisesToAvoid: [...(prev.preferences.exercisesToAvoid || []), newAvoid.trim()],
+      },
+    }))
+    setNewAvoid('')
+  }
+
+  const removeAvoid = (index: number) => {
+    setProfile(prev => ({
+      ...prev,
+      preferences: {
+        ...prev.preferences,
+        exercisesToAvoid: (prev.preferences.exercisesToAvoid || []).filter((_, i) => i !== index),
+      },
+    }))
+  }
+
   if (loading) {
     return (
       <div className="profile-loading">
@@ -160,6 +232,57 @@ export default function ProfileEditor() {
   return (
     <div className="profile-editor">
       <h2 className="profile-title">Coaching Profile</h2>
+
+      {/* Biometrics Section */}
+      <section className="profile-section">
+        <h3 className="profile-section-title">Biometrics</h3>
+        <div className="profile-prefs">
+          <div className="profile-pref-row">
+            <label className="profile-pref-label">Height</label>
+            <input
+              className="profile-pref-input"
+              type="text"
+              placeholder={`6'0"`}
+              value={profile.biometrics.height || ''}
+              onChange={e => updateBiometric('height', e.target.value)}
+              style={{ width: '100px' }}
+            />
+          </div>
+          <div className="profile-pref-row">
+            <label className="profile-pref-label">Weight (lbs)</label>
+            <input
+              className="profile-pref-input"
+              type="number"
+              inputMode="numeric"
+              placeholder="180"
+              value={profile.biometrics.weight || ''}
+              onChange={e => updateBiometric('weight', e.target.value)}
+            />
+          </div>
+          <div className="profile-pref-row">
+            <label className="profile-pref-label">Age</label>
+            <input
+              className="profile-pref-input"
+              type="number"
+              inputMode="numeric"
+              placeholder="30"
+              value={profile.biometrics.age || ''}
+              onChange={e => updateBiometric('age', e.target.value)}
+            />
+          </div>
+          <div className="profile-pref-row">
+            <label className="profile-pref-label">Body Type</label>
+            <input
+              className="profile-pref-input"
+              type="text"
+              placeholder="e.g. Ectomorph"
+              value={profile.biometrics.bodyType || ''}
+              onChange={e => updateBiometric('bodyType', e.target.value)}
+              style={{ width: '140px' }}
+            />
+          </div>
+        </div>
+      </section>
 
       {/* Maxes Section */}
       <section className="profile-section">
@@ -178,6 +301,36 @@ export default function ProfileEditor() {
               />
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* Goals Section */}
+      <section className="profile-section">
+        <h3 className="profile-section-title">Goals (Priority Order)</h3>
+        <div className="profile-goals">
+          {(profile.preferences.goals || []).map((goal, idx) => (
+            <button
+              key={idx}
+              className="profile-tag profile-goal-tag tap-target"
+              onClick={() => removeGoal(idx)}
+            >
+              <span className="profile-goal-number">{idx + 1}</span>
+              {goal} x
+            </button>
+          ))}
+        </div>
+        <div className="profile-add-row">
+          <input
+            className="profile-add-input"
+            type="text"
+            placeholder="e.g. Build chest size"
+            value={newGoal}
+            onChange={e => setNewGoal(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && addGoal()}
+          />
+          <button className="btn-secondary tap-target" onClick={addGoal}>
+            Add
+          </button>
         </div>
       </section>
 
@@ -231,9 +384,38 @@ export default function ProfileEditor() {
         </div>
       </section>
 
+      {/* Exercises to Avoid Section */}
+      <section className="profile-section">
+        <h3 className="profile-section-title">Exercises to Avoid</h3>
+        <div className="profile-tags">
+          {(profile.preferences.exercisesToAvoid || []).map((item, idx) => (
+            <button
+              key={idx}
+              className="profile-tag tap-target"
+              onClick={() => removeAvoid(idx)}
+            >
+              {item} x
+            </button>
+          ))}
+        </div>
+        <div className="profile-add-row">
+          <input
+            className="profile-add-input"
+            type="text"
+            placeholder="e.g. Deadlifts - injury risk"
+            value={newAvoid}
+            onChange={e => setNewAvoid(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && addAvoid()}
+          />
+          <button className="btn-secondary tap-target" onClick={addAvoid}>
+            Add
+          </button>
+        </div>
+      </section>
+
       {/* Dietary Constraints */}
       <section className="profile-section">
-        <h3 className="profile-section-title">Dietary Constraints</h3>
+        <h3 className="profile-section-title">Dietary / Nutrition</h3>
         <div className="profile-tags">
           {profile.dietaryConstraints.map((item, idx) => (
             <button
@@ -304,6 +486,44 @@ export default function ProfileEditor() {
                   },
                 }))
               }
+            />
+          </div>
+          <div className="profile-pref-row">
+            <label className="profile-pref-label">Training time</label>
+            <input
+              className="profile-pref-input"
+              type="text"
+              placeholder="e.g. Morning"
+              value={profile.preferences.trainingTime || ''}
+              onChange={e =>
+                setProfile(prev => ({
+                  ...prev,
+                  preferences: {
+                    ...prev.preferences,
+                    trainingTime: e.target.value || undefined,
+                  },
+                }))
+              }
+              style={{ width: '140px' }}
+            />
+          </div>
+          <div className="profile-pref-row">
+            <label className="profile-pref-label">Communication style</label>
+            <input
+              className="profile-pref-input"
+              type="text"
+              placeholder="e.g. Data-driven"
+              value={profile.preferences.communicationStyle || ''}
+              onChange={e =>
+                setProfile(prev => ({
+                  ...prev,
+                  preferences: {
+                    ...prev.preferences,
+                    communicationStyle: e.target.value || undefined,
+                  },
+                }))
+              }
+              style={{ width: '140px' }}
             />
           </div>
         </div>

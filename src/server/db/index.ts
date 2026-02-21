@@ -3,7 +3,8 @@ import Database from 'better-sqlite3'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
 import * as schema from './schema.js'
 
-const sqlite = new Database('workout.db')
+const dbPath = process.env.DB_PATH || 'workout.db'
+const sqlite = new Database(dbPath)
 
 // Enable WAL mode for better concurrent read performance
 sqlite.pragma('journal_mode = WAL')
