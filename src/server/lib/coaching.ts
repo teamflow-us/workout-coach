@@ -1,13 +1,23 @@
 import { db } from '../db/index.js'
 import { workouts } from '../db/schema.js'
 import { desc } from 'drizzle-orm'
+import { retrieveRelevantSessions, type RetrievedSession } from './rag.js'
+
+export interface BuildPromptResult {
+  prompt: string
+  sources: Array<{ date: string; snippet: string; score: number }>
+}
 
 /**
  * Build the system prompt for the AI coaching persona.
- * Includes the coaching profile (maxes, injuries, equipment, preferences)
- * and recent workout history for context.
+ * Includes the coaching profile (maxes, injuries, equipment, preferences),
+ * recent workout history, and RAG-retrieved training context when available.
+ *
+ * When userMessage is provided, queries ChromaDB for relevant past sessions
+ * and includes them in the system prompt. Falls back to Phase 2 behavior
+ * (profile + recent workouts only) if ChromaDB is unavailable.
  */
-export async function buildSystemPrompt(): Promise<string> {
+export async function buildSystemPrompt(userMessage?: string): Promise<BuildPromptResult> {
   // Load coaching profile (single-row table)
   const profile = await db.query.coachingProfiles.findFirst()
 
@@ -37,11 +47,43 @@ No profile set yet. Ask the user about their training background, current maxes,
       ? `## Recent Workouts\n${recentWorkouts.map((w) => formatWorkoutForContext(w)).join('\n\n')}`
       : `## Recent Workouts\nNo workouts recorded yet.`
 
-  return `You are an experienced strength and conditioning coach. You have been coaching this user for months and know their training history intimately.
+  // RAG retrieval: fetch relevant past sessions when user message is provided
+  let ragSection = ''
+  let sources: Array<{ date: string; snippet: string; score: number }> = []
+
+  if (userMessage) {
+    try {
+      const retrieved = await retrieveRelevantSessions(userMessage, 5)
+      if (retrieved.length > 0) {
+        sources = retrieved.map((r) => ({
+          date: (r.metadata.date as string) || 'Unknown date',
+          snippet: r.snippet,
+          score: Math.round(r.score * 100),
+        }))
+
+        const sessionEntries = sources
+          .map(
+            (s) =>
+              `### ${s.date} session (relevance: ${s.score}%)\n${s.snippet}`
+          )
+          .join('\n\n')
+
+        ragSection = `\n\n## Relevant Training History (from memory)\n${sessionEntries}`
+      }
+    } catch (err) {
+      console.warn('RAG retrieval failed, proceeding with profile-only mode:', err)
+    }
+  }
+
+  const ragGuidelines = sources.length > 0
+    ? `\n- When referencing past workouts from memory, cite the date and specific details\n- Include a 'Sources used' section at the end listing which past sessions informed your response`
+    : ''
+
+  const prompt = `You are an experienced strength and conditioning coach. You have been coaching this user for months and know their training history intimately.
 
 ${profileSection}
 
-${workoutSection}
+${workoutSection}${ragSection}
 
 ## Guidelines
 - Generate workout plans as structured data when asked
@@ -50,7 +92,9 @@ ${workoutSection}
 - Be encouraging but data-driven
 - Reference specific past workouts when relevant
 - If the user reports pain or injury, immediately modify the program to avoid aggravation
-- Keep responses concise and actionable -- this is used in a mobile chat interface`
+- Keep responses concise and actionable -- this is used in a mobile chat interface${ragGuidelines}`
+
+  return { prompt, sources }
 }
 
 /**

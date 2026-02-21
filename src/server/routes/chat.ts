@@ -10,6 +10,7 @@ import {
   messagesToHistory,
 } from '../lib/coaching.js'
 import { validateWorkoutWeights } from '../lib/guardrails.js'
+import { embedAndStore, extractMetadata } from '../lib/rag.js'
 
 const app = new Hono()
 
@@ -34,7 +35,7 @@ app.post('/send', async (c) => {
     .orderBy(asc(messages.createdAt))
 
   const history = messagesToHistory(dbMessages)
-  const systemPrompt = await buildSystemPrompt()
+  const { prompt: systemPrompt, sources } = await buildSystemPrompt(body.message)
 
   return streamSSE(c, async (stream) => {
     try {
@@ -62,6 +63,14 @@ app.post('/send', async (c) => {
         }
       }
 
+      // Send sources before done event so client can attach them to the message
+      if (sources.length > 0) {
+        await stream.writeSSE({
+          data: JSON.stringify({ type: 'sources', sources }),
+          event: 'message',
+        })
+      }
+
       // Signal completion with full text
       await stream.writeSSE({
         data: JSON.stringify({ type: 'done', fullText }),
@@ -73,6 +82,16 @@ app.post('/send', async (c) => {
         { role: 'user', content: body.message },
         { role: 'model', content: fullText },
       ])
+
+      // Fire-and-forget write-back: embed the exchange in ChromaDB
+      const combinedText = body.message + ' ' + fullText
+      const meta = extractMetadata(combinedText)
+      embedAndStore(body.message, fullText, {
+        date: new Date().toISOString().split('T')[0],
+        exercises: meta.exercises.join(','),
+        muscleGroups: meta.muscleGroups.join(','),
+        type: 'live-session',
+      }).catch((err) => console.warn('RAG write-back failed:', err))
     } catch (err) {
       console.error('Chat streaming error:', err)
       await stream.writeSSE({
@@ -121,7 +140,7 @@ app.post('/generate-workout', async (c) => {
   }
 
   try {
-    const systemPrompt = await buildSystemPrompt()
+    const { prompt: systemPrompt, sources } = await buildSystemPrompt(body.prompt)
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
@@ -187,19 +206,31 @@ app.post('/generate-workout', async (c) => {
     })
 
     // Persist the conversation exchange as messages
+    const aiSummary = `Generated workout: ${plan.programName} with ${plan.exercises.length} exercises`
     await db.insert(messages).values([
       { role: 'user', content: body.prompt },
       {
         role: 'model',
-        content: `Generated workout: ${plan.programName} with ${plan.exercises.length} exercises`,
+        content: aiSummary,
         workoutId: savedWorkout.id,
       },
     ])
+
+    // Fire-and-forget write-back: embed the exchange in ChromaDB
+    const combinedText = body.prompt + ' ' + aiSummary
+    const meta = extractMetadata(combinedText)
+    embedAndStore(body.prompt, aiSummary, {
+      date: new Date().toISOString().split('T')[0],
+      exercises: meta.exercises.join(','),
+      muscleGroups: meta.muscleGroups.join(','),
+      type: 'live-session',
+    }).catch((err) => console.warn('RAG write-back failed:', err))
 
     return c.json({
       workout: savedWorkout,
       plan,
       warnings,
+      sources,
     })
   } catch (err) {
     console.error('Workout generation error:', err)
