@@ -1,0 +1,170 @@
+import { useState, useEffect, useCallback } from 'react'
+import ExerciseCard from './ExerciseCard'
+
+// ---------- Types ----------
+
+export interface WorkoutSet {
+  id: number
+  setNumber: number
+  reps: number | null
+  weight: number | null
+  rpe: number | null
+  notes: string | null
+}
+
+export interface WorkoutExercise {
+  id: number
+  name: string
+  order: number
+  restSeconds: number | null
+  sets: WorkoutSet[]
+}
+
+export interface Workout {
+  id: number
+  date: string
+  programName: string | null
+  notes: string | null
+  feedback: string | null
+  exercises: WorkoutExercise[]
+}
+
+interface WorkoutViewProps {
+  workoutId?: number | null
+  onStartRest: (seconds: number) => void
+}
+
+export default function WorkoutView({ workoutId, onStartRest }: WorkoutViewProps) {
+  const [workout, setWorkout] = useState<Workout | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [activeExerciseIndex, setActiveExerciseIndex] = useState(0)
+  const [completedSets, setCompletedSets] = useState<Set<string>>(new Set())
+
+  const loadWorkout = useCallback(async (id?: number | null) => {
+    setLoading(true)
+    try {
+      let targetId = id
+
+      if (!targetId) {
+        // Fetch most recent workout
+        const listRes = await fetch('/api/workouts')
+        if (!listRes.ok) throw new Error('Failed to fetch workouts')
+        const workouts = await listRes.json()
+        if (!workouts.length) {
+          setWorkout(null)
+          setLoading(false)
+          return
+        }
+        targetId = workouts[0].id
+      }
+
+      // Fetch full workout details
+      const res = await fetch(`/api/workouts/${targetId}`)
+      if (!res.ok) throw new Error('Failed to fetch workout')
+      const data: Workout = await res.json()
+      setWorkout(data)
+      setActiveExerciseIndex(0)
+      setCompletedSets(new Set())
+    } catch (err) {
+      console.error('Failed to load workout:', err)
+      setWorkout(null)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadWorkout(workoutId)
+  }, [workoutId, loadWorkout])
+
+  const handleSetComplete = useCallback((exerciseId: number, setNumber: number) => {
+    const key = `${exerciseId}-${setNumber}`
+    setCompletedSets(prev => {
+      const next = new Set(prev)
+      if (next.has(key)) {
+        next.delete(key)
+      } else {
+        next.add(key)
+      }
+      return next
+    })
+  }, [])
+
+  const handlePrevExercise = () => {
+    setActiveExerciseIndex(prev => Math.max(0, prev - 1))
+  }
+
+  const handleNextExercise = () => {
+    if (!workout) return
+    setActiveExerciseIndex(prev => Math.min(workout.exercises.length - 1, prev + 1))
+  }
+
+  if (loading) {
+    return (
+      <div className="workout-empty">
+        <p>Loading workout...</p>
+      </div>
+    )
+  }
+
+  if (!workout) {
+    return (
+      <div className="workout-empty">
+        <h2>No Workout Yet</h2>
+        <p>Head to the Chat tab and ask your coach to generate a workout, or use the "Generate Workout" button.</p>
+      </div>
+    )
+  }
+
+  const sortedExercises = [...workout.exercises].sort((a, b) => a.order - b.order)
+
+  return (
+    <div className="workout-view">
+      <div className="workout-header">
+        <h2 className="workout-title">{workout.programName || 'Workout'}</h2>
+        <p className="workout-date">{workout.date}</p>
+      </div>
+
+      <div className="workout-exercises">
+        {sortedExercises.map((exercise, idx) => (
+          <ExerciseCard
+            key={exercise.id}
+            exercise={exercise}
+            isActive={idx === activeExerciseIndex}
+            completedSets={completedSets}
+            onSetComplete={(setNumber) => handleSetComplete(exercise.id, setNumber)}
+            onStartRest={onStartRest}
+          />
+        ))}
+      </div>
+
+      {sortedExercises.length > 1 && (
+        <div className="workout-nav">
+          <button
+            className="btn-secondary tap-target"
+            onClick={handlePrevExercise}
+            disabled={activeExerciseIndex === 0}
+          >
+            Prev
+          </button>
+          <span className="workout-nav-indicator">
+            {activeExerciseIndex + 1} / {sortedExercises.length}
+          </span>
+          <button
+            className="btn-secondary tap-target"
+            onClick={handleNextExercise}
+            disabled={activeExerciseIndex === sortedExercises.length - 1}
+          >
+            Next
+          </button>
+        </div>
+      )}
+
+      {workout.notes && (
+        <div className="workout-notes">
+          <p>{workout.notes}</p>
+        </div>
+      )}
+    </div>
+  )
+}
