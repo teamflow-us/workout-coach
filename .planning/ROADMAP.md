@@ -13,7 +13,7 @@ William Workout delivers a RAG-powered personal workout coaching app in four pha
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Validation and Foundation** - Resolve unknowns, stand up backend and database
-- [ ] **Phase 2: AI Coaching Loop** - Working AI coach with gym-ready workout interface
+- [x] **Phase 2: AI Coaching Loop** - Working AI coach with gym-ready workout interface
 - [ ] **Phase 3: RAG Pipeline** - Import training history and give the AI persistent memory
 - [ ] **Phase 4: Progress, Diet, and Deploy** - Charts, diet guidance, and ship it
 
@@ -49,7 +49,7 @@ Plans:
 
 Plans:
 - [x] 02-01-PLAN.md -- Chat interface, Gemini streaming, workout generation, freeform logging, and all backend API routes
-- [ ] 02-02-PLAN.md -- Workout view, rest timer, wake lock, profile editor, and gym-ready mobile UX
+- [x] 02-02-PLAN.md -- Workout view, rest timer, wake lock, profile editor, and gym-ready mobile UX
 
 ### Phase 3: RAG Pipeline
 **Goal**: The AI remembers the user's full training history and gets smarter with every workout
@@ -90,6 +90,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | Phase | Plans Complete | Status | Completed |
 |-------|---------------|--------|-----------|
 | 1. Validation and Foundation | 2/2 | Complete | 2026-02-21 |
-| 2. AI Coaching Loop | 1/2 | In progress | - |
+| 2. AI Coaching Loop | 2/2 | Complete | 2026-02-21 |
 | 3. RAG Pipeline | 0/2 | Not started | - |
 | 4. Progress, Diet, and Deploy | 0/2 | Not started | - |

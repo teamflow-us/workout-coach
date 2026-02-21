@@ -13,12 +13,12 @@
 
 ### AI Coaching
 
-- [ ] **COACH-01**: Chat interface for conversational coaching with Gemini API
-- [ ] **COACH-02**: AI generates structured workout plans (exercises, sets, reps, rest, weight)
-- [ ] **COACH-03**: Coaching profile always in context (current maxes, injuries, equipment, dietary constraints)
-- [ ] **COACH-04**: Output guardrails — validate generated weights against known ranges
-- [ ] **COACH-05**: System prompt calibrated to match existing Gemini coaching style
-- [ ] **COACH-06**: Freeform text feedback on completed workouts
+- [x] **COACH-01**: Chat interface for conversational coaching with Gemini API
+- [x] **COACH-02**: AI generates structured workout plans (exercises, sets, reps, rest, weight)
+- [x] **COACH-03**: Coaching profile always in context (current maxes, injuries, equipment, dietary constraints)
+- [x] **COACH-04**: Output guardrails — validate generated weights against known ranges
+- [x] **COACH-05**: System prompt calibrated to match existing Gemini coaching style
+- [x] **COACH-06**: Freeform text feedback on completed workouts
 
 ### RAG & Memory
 
@@ -29,11 +29,11 @@
 
 ### Workout Interface
 
-- [ ] **UI-01**: Today's workout view — current exercises, sets, reps, rest times, weights
-- [ ] **UI-02**: Workout logging — log completed sets via freeform text
+- [x] **UI-01**: Today's workout view — current exercises, sets, reps, rest times, weights
+- [x] **UI-02**: Workout logging — log completed sets via freeform text
 - [ ] **UI-03**: Workout history — searchable log of past workouts
-- [ ] **UI-04**: Rest timer — countdown between sets
-- [ ] **UI-05**: Mobile-first responsive design for gym use
+- [x] **UI-04**: Rest timer — countdown between sets
+- [x] **UI-05**: Mobile-first responsive design for gym use
 
 ### Progress Tracking
 
@@ -45,7 +45,7 @@
 
 - [ ] **DIET-01**: Macro targets displayed alongside workouts
 - [ ] **DIET-02**: Food recommendations respecting constraints (gluten-free, high protein, lycopene, lutein sources)
-- [ ] **DIET-03**: Dietary constraints stored in coaching profile
+- [x] **DIET-03**: Dietary constraints stored in coaching profile
 
 ### Infrastructure
 
@@ -95,27 +95,27 @@
 | VALID-01 | Phase 1 | Complete |
 | VALID-02 | Phase 1 | Complete |
 | VALID-03 | Phase 1 | Complete |
-| COACH-01 | Phase 2 | Pending |
-| COACH-02 | Phase 2 | Pending |
-| COACH-03 | Phase 2 | Pending |
-| COACH-04 | Phase 2 | Pending |
-| COACH-05 | Phase 2 | Pending |
-| COACH-06 | Phase 2 | Pending |
+| COACH-01 | Phase 2 | Complete |
+| COACH-02 | Phase 2 | Complete |
+| COACH-03 | Phase 2 | Complete |
+| COACH-04 | Phase 2 | Complete |
+| COACH-05 | Phase 2 | Complete |
+| COACH-06 | Phase 2 | Complete |
 | RAG-01 | Phase 3 | Pending |
 | RAG-02 | Phase 3 | Pending |
 | RAG-03 | Phase 3 | Pending |
 | RAG-04 | Phase 3 | Pending |
-| UI-01 | Phase 2 | Pending |
-| UI-02 | Phase 2 | Pending |
+| UI-01 | Phase 2 | Complete |
+| UI-02 | Phase 2 | Complete |
 | UI-03 | Phase 4 | Pending |
-| UI-04 | Phase 2 | Pending |
-| UI-05 | Phase 2 | Pending |
+| UI-04 | Phase 2 | Complete |
+| UI-05 | Phase 2 | Complete |
 | PROG-01 | Phase 4 | Pending |
 | PROG-02 | Phase 4 | Pending |
 | PROG-03 | Phase 4 | Pending |
 | DIET-01 | Phase 4 | Pending |
 | DIET-02 | Phase 4 | Pending |
-| DIET-03 | Phase 2 | Pending |
+| DIET-03 | Phase 2 | Complete |
 | INFRA-01 | Phase 1 | Complete |
 | INFRA-02 | Phase 1 | Complete |
 | INFRA-03 | Phase 4 | Pending |
@@ -127,4 +127,4 @@
 
 ---
 *Requirements defined: 2026-02-21*
-*Last updated: 2026-02-21 after roadmap creation*
+*Last updated: 2026-02-21 after Phase 2 completion*

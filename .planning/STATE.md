@@ -5,33 +5,33 @@
 See: .planning/PROJECT.md (updated 2026-02-21)
 
 **Core value:** The AI coaching loop must work: give feedback on a workout in natural language, get an intelligently adjusted next workout that reflects your full training history.
-**Current focus:** Phase 2 in progress - workout view, rest timer, profile editor built; awaiting human verification
+**Current focus:** Phase 2 complete - full AI coaching loop verified. Ready for Phase 3 (RAG Pipeline).
 
 ## Current Position
 
-Phase: 2 of 4 (AI Coaching Loop)
-Plan: 2 of 2 in current phase
-Status: Awaiting checkpoint (human-verify)
-Last activity: 2026-02-21 - 02-02-PLAN.md Tasks 1-2 complete, checkpoint pending
+Phase: 2 of 4 (AI Coaching Loop) -- COMPLETE
+Plan: 2 of 2 in current phase -- COMPLETE
+Status: Phase complete
+Last activity: 2026-02-21 - Completed 02-02-PLAN.md (workout view, rest timer, profile editor, gym UX)
 
-Progress: [████░░░░░░] 37%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
-- Average duration: 6.7 min
-- Total execution time: 20 min
+- Total plans completed: 4
+- Average duration: 8 min
+- Total execution time: 32 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1 | 2/2 | 13 min | 6.5 min |
-| 2 | 1/2 | 7 min | 7 min |
+| 2 | 2/2 | 19 min | 9.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-01 (7 min), 01-02 (5 min), 01-01 (8 min)
+- Last 5 plans: 02-02 (12 min), 02-01 (7 min), 01-02 (5 min), 01-01 (8 min)
 - Trend: Consistent pace
 
 *Updated after each plan completion*
@@ -53,6 +53,9 @@ Recent decisions affecting current work:
 - [02-01]: Dual-mode AI: streaming text for chat, non-streaming JSON for workout generation
 - [02-01]: Server-side history: DB messages converted to Gemini Content[] on each request
 - [02-01]: Explicit workout generation via button (not AI intent detection)
+- [02-02]: Three-tab bottom nav (Chat / Workout / Profile) for mobile gym use
+- [02-02]: Rest timer overlay with color transitions (green -> yellow -> red at <10s)
+- [02-02]: Wake lock activates on Workout tab, releases on tab switch
 
 ### Pending Todos
 
@@ -66,6 +69,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-02-21T21:44:55Z
-Stopped at: 02-02-PLAN.md checkpoint (awaiting human-verify)
+Last session: 2026-02-21T21:56:44Z
+Stopped at: Completed 02-02-PLAN.md (Phase 2 complete)
 Resume file: None
