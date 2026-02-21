@@ -65,7 +65,7 @@ Plans:
 Plans:
 - [x] 03-01-PLAN.md -- ChromaDB client, RAG utilities, and Gemini history import with session-level chunking
 - [x] 03-02-PLAN.md -- RAG-augmented system prompt, write-back hooks, and Sources UI on chat messages
-- [ ] 03-03-PLAN.md -- Gap closure: wire sources into generate-workout client path
+- [x] 03-03-PLAN.md -- Gap closure: wire sources into generate-workout client path
 
 ### Phase 4: Progress, Diet, and Deploy
 **Goal**: User can track their progress over time, get diet guidance, and access the app from any device
@@ -92,5 +92,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 |-------|---------------|--------|-----------|
 | 1. Validation and Foundation | 2/2 | Complete | 2026-02-21 |
 | 2. AI Coaching Loop | 2/2 | Complete | 2026-02-21 |
-| 3. RAG Pipeline | 2/3 | Gap closure | 2026-02-21 |
+| 3. RAG Pipeline | 3/3 | Complete | 2026-02-21 |
 | 4. Progress, Diet, and Deploy | 0/2 | Not started | - |
