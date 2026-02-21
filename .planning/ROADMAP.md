@@ -29,11 +29,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. ChromaDB + Gemini embedding pipeline tested with a working script, structured JSON output verified
   4. Hono backend serves API routes with Gemini API key secured server-side
   5. SQLite database with workout schema accepts and returns workout data through the API
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 01-01: Pre-build validation (export, token count, ChromaDB test)
-- [ ] 01-02: Backend and database foundation (Hono, SQLite, Drizzle, React shell)
+- [ ] 01-01-PLAN.md -- Pre-build validation: export Gemini conversation, measure tokens, test ChromaDB + embeddings pipeline
+- [ ] 01-02-PLAN.md -- Backend and database foundation: Hono server, SQLite/Drizzle schema, workout CRUD API, React shell
 
 ### Phase 2: AI Coaching Loop
 **Goal**: User can chat with an AI coach, receive a structured workout, and use it at the gym on their phone
