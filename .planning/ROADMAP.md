@@ -48,7 +48,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md -- Chat interface, Gemini streaming, workout generation, freeform logging, and all backend API routes
+- [x] 02-01-PLAN.md -- Chat interface, Gemini streaming, workout generation, freeform logging, and all backend API routes
 - [ ] 02-02-PLAN.md -- Workout view, rest timer, wake lock, profile editor, and gym-ready mobile UX
 
 ### Phase 3: RAG Pipeline
@@ -90,6 +90,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | Phase | Plans Complete | Status | Completed |
 |-------|---------------|--------|-----------|
 | 1. Validation and Foundation | 2/2 | Complete | 2026-02-21 |
-| 2. AI Coaching Loop | 0/2 | Not started | - |
+| 2. AI Coaching Loop | 1/2 | In progress | - |
 | 3. RAG Pipeline | 0/2 | Not started | - |
 | 4. Progress, Diet, and Deploy | 0/2 | Not started | - |
