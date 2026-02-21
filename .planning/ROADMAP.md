@@ -60,11 +60,11 @@ Plans:
   2. When generating a workout, the AI retrieves relevant past training context (e.g., "what did I squat last week?")
   3. New workout feedback is automatically embedded and added to the knowledge base after each session
   4. The AI's coaching quality visibly improves compared to Phase 2 (references specific past workouts, adapts to stated preferences and injuries)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 03-01: Import pipeline and chunking strategy
-- [ ] 03-02: Retrieval integration and feedback write-back loop
+- [ ] 03-01-PLAN.md -- ChromaDB client, RAG utilities, and Gemini history import with session-level chunking
+- [ ] 03-02-PLAN.md -- RAG-augmented system prompt, write-back hooks, and Sources UI on chat messages
 
 ### Phase 4: Progress, Diet, and Deploy
 **Goal**: User can track their progress over time, get diet guidance, and access the app from any device
