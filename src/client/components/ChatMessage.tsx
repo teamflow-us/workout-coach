@@ -1,8 +1,15 @@
+interface ChatSource {
+  date: string
+  snippet: string
+  score: number
+}
+
 interface ChatMessageProps {
   role: 'user' | 'model'
   text: string
   timestamp: number
   isStreaming?: boolean
+  sources?: ChatSource[]
 }
 
 /**
@@ -39,15 +46,40 @@ function formatTime(timestamp: number): string {
   return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
 }
 
+function truncateSnippet(snippet: string, maxLen = 150): string {
+  if (snippet.length <= maxLen) return snippet
+  return snippet.slice(0, maxLen).trimEnd() + '...'
+}
+
 export default function ChatMessage({
   role,
   text,
   timestamp,
   isStreaming,
+  sources,
 }: ChatMessageProps) {
   return (
     <div className={`chat-message ${role}`}>
       <div>{formatText(text)}</div>
+      {role === 'model' && sources && sources.length > 0 && !isStreaming && (
+        <details className="chat-sources">
+          <summary className="chat-sources-summary">
+            Sources used ({sources.length})
+          </summary>
+          <div className="chat-sources-list">
+            {sources.map((source, idx) => (
+              <div key={idx} className="chat-source-item">
+                <div className="chat-source-header">
+                  {source.date} ({source.score}% relevant)
+                </div>
+                <div className="chat-source-snippet">
+                  {truncateSnippet(source.snippet)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
       {isStreaming && !text && (
         <div className="streaming-indicator">
           <div className="dot" />

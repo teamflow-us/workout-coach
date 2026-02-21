@@ -54,6 +54,7 @@ export default function Chat({ onWorkoutGenerated }: ChatProps) {
               role={msg.role}
               text={msg.text}
               timestamp={msg.timestamp}
+              sources={msg.sources}
               isStreaming={
                 isStreaming && idx === messages.length - 1 && msg.role === 'model'
               }

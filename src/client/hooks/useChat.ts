@@ -1,9 +1,16 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 
+export interface ChatSource {
+  date: string
+  snippet: string
+  score: number
+}
+
 export interface ChatMessage {
   role: 'user' | 'model'
   text: string
   timestamp: number
+  sources?: ChatSource[]
 }
 
 interface GenerateWorkoutResponse {
@@ -32,6 +39,7 @@ export function useChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isStreaming, setIsStreaming] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
+  const pendingSourcesRef = useRef<ChatSource[] | null>(null)
 
   // Load chat history on mount
   useEffect(() => {
@@ -81,6 +89,7 @@ export function useChat() {
 
     setMessages((prev) => [...prev, userMsg, aiMsg])
     setIsStreaming(true)
+    pendingSourcesRef.current = null
 
     abortRef.current = new AbortController()
 
@@ -127,6 +136,28 @@ export function useChat() {
                 }
                 return updated
               })
+            }
+
+            if (data.type === 'sources') {
+              // Store sources; they'll be attached to the message on 'done'
+              pendingSourcesRef.current = data.sources as ChatSource[]
+            }
+
+            if (data.type === 'done') {
+              // Attach pending sources to the finalized AI message
+              if (pendingSourcesRef.current) {
+                const attachedSources = pendingSourcesRef.current
+                setMessages((prev) => {
+                  const updated = [...prev]
+                  const last = updated[updated.length - 1]
+                  updated[updated.length - 1] = {
+                    ...last,
+                    sources: attachedSources,
+                  }
+                  return updated
+                })
+                pendingSourcesRef.current = null
+              }
             }
 
             if (data.type === 'error') {
