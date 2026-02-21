@@ -2,7 +2,11 @@ import { useState, useRef, useEffect } from 'react'
 import { useChat } from '../hooks/useChat'
 import ChatMessage from './ChatMessage'
 
-export default function Chat() {
+interface ChatProps {
+  onWorkoutGenerated?: (workoutId: number) => void
+}
+
+export default function Chat({ onWorkoutGenerated }: ChatProps) {
   const { messages, sendMessage, generateWorkout, isStreaming } = useChat()
   const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -28,9 +32,12 @@ export default function Chat() {
     }
   }
 
-  const handleGenerateWorkout = () => {
+  const handleGenerateWorkout = async () => {
     if (isStreaming) return
-    generateWorkout('Generate a workout for today based on my training history and goals')
+    const result = await generateWorkout('Generate a workout for today based on my training history and goals')
+    if (result?.workout?.id && onWorkoutGenerated) {
+      onWorkoutGenerated(result.workout.id)
+    }
   }
 
   return (
