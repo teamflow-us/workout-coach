@@ -79,6 +79,10 @@ export default function WorkoutView({ workoutId, onStartRest }: WorkoutViewProps
 
   const handleSetComplete = useCallback((exerciseId: number, setNumber: number) => {
     const key = `${exerciseId}-${setNumber}`
+
+    // Determine if this click is completing (not un-completing)
+    const isCompleting = !completedSets.has(key)
+
     setCompletedSets(prev => {
       const next = new Set(prev)
       if (next.has(key)) {
@@ -88,7 +92,24 @@ export default function WorkoutView({ workoutId, onStartRest }: WorkoutViewProps
       }
       return next
     })
-  }, [])
+
+    // Auto-advance when completing the last remaining set of the active exercise
+    if (isCompleting && workout) {
+      const sortedExercises = [...workout.exercises].sort((a, b) => a.order - b.order)
+      const activeExercise = sortedExercises[activeExerciseIndex]
+
+      if (activeExercise && activeExercise.id === exerciseId) {
+        const allOtherSetsComplete = activeExercise.sets.every(s => {
+          if (s.setNumber === setNumber) return true // the one we just completed
+          return completedSets.has(`${exerciseId}-${s.setNumber}`)
+        })
+
+        if (allOtherSetsComplete && activeExerciseIndex < sortedExercises.length - 1) {
+          setActiveExerciseIndex(activeExerciseIndex + 1)
+        }
+      }
+    }
+  }, [completedSets, workout, activeExerciseIndex])
 
   const handlePrevExercise = () => {
     setActiveExerciseIndex(prev => Math.max(0, prev - 1))
