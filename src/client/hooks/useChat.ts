@@ -39,6 +39,7 @@ interface GenerateWorkoutResponse {
 export function useChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isStreaming, setIsStreaming] = useState(false)
+  const [historyLoaded, setHistoryLoaded] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
   const pendingSourcesRef = useRef<ChatSource[] | null>(null)
 
@@ -68,6 +69,8 @@ export function useChat() {
       setMessages(loaded)
     } catch (err) {
       console.error('Failed to load chat history:', err)
+    } finally {
+      setHistoryLoaded(true)
     }
   }
 
@@ -253,5 +256,5 @@ export function useChat() {
     []
   )
 
-  return { messages, sendMessage, generateWorkout, isStreaming }
+  return { messages, sendMessage, generateWorkout, isStreaming, historyLoaded }
 }
