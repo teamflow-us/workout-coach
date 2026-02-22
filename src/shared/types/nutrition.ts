@@ -33,6 +33,7 @@ export interface FoodLogEntry {
   sodium: number
   source: 'usda' | 'openfoodfacts' | 'gemini'
   sourceId: string
+  status: 'pending' | 'complete' | 'failed'
 }
 
 export interface NutritionGoals {

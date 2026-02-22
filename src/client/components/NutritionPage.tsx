@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useNutrition } from '../hooks/useNutrition'
 import MacroRings from './MacroRings'
-import AddFoodModal from './AddFoodModal'
+import QuickAddInput from './AddFoodModal'
 import type { MealType, FoodLogEntry } from '../../shared/types/nutrition.js'
 
 const MEALS: { type: MealType; label: string }[] = [
@@ -32,8 +32,7 @@ function displayDate(dateStr: string): string {
 
 export default function NutritionPage() {
   const [date, setDate] = useState(() => formatDate(new Date()))
-  const [addingMeal, setAddingMeal] = useState<MealType | null>(null)
-  const { entries, totals, goals, loading, addEntry, deleteEntry, entriesForMeal, mealCalories } = useNutrition(date)
+  const { totals, goals, loading, quickAdd, deleteEntry, entriesForMeal, mealCalories } = useNutrition(date)
 
   const handlePrevDay = useCallback(() => {
     setDate((prev) => {
@@ -92,20 +91,41 @@ export default function NutritionPage() {
                 {mealEntries.length > 0 && (
                   <div className="meal-entries">
                     {mealEntries.map((entry: FoodLogEntry) => (
-                      <div key={entry.id} className="meal-entry">
+                      <div
+                        key={entry.id}
+                        className={`meal-entry${entry.status === 'pending' ? ' meal-entry-pending' : ''}${entry.status === 'failed' ? ' meal-entry-failed' : ''}`}
+                      >
                         <div className="meal-entry-info">
                           <div className="meal-entry-name">
                             {entry.foodName}
-                            {entry.servings !== 1 && (
+                            {entry.servings !== 1 && entry.status === 'complete' && (
                               <span className="meal-entry-servings"> x{entry.servings}</span>
                             )}
+                            {entry.status === 'pending' && (
+                              <span className="meal-entry-badge pending">Pending</span>
+                            )}
+                            {entry.status === 'failed' && (
+                              <span className="meal-entry-badge failed">Failed</span>
+                            )}
                           </div>
-                          <div className="meal-entry-macros">
-                            {Math.round(entry.calories * entry.servings)} cal &middot;{' '}
-                            {Math.round(entry.protein * entry.servings)}p &middot;{' '}
-                            {Math.round(entry.carbs * entry.servings)}c &middot;{' '}
-                            {Math.round(entry.fat * entry.servings)}f
-                          </div>
+                          {entry.status === 'complete' && (
+                            <div className="meal-entry-macros">
+                              {Math.round(entry.calories * entry.servings)} cal &middot;{' '}
+                              {Math.round(entry.protein * entry.servings)}p &middot;{' '}
+                              {Math.round(entry.carbs * entry.servings)}c &middot;{' '}
+                              {Math.round(entry.fat * entry.servings)}f
+                            </div>
+                          )}
+                          {entry.status === 'pending' && (
+                            <div className="meal-entry-macros meal-entry-macros-pending">
+                              Estimating macros...
+                            </div>
+                          )}
+                          {entry.status === 'failed' && (
+                            <div className="meal-entry-macros meal-entry-macros-failed">
+                              Macros unavailable
+                            </div>
+                          )}
                         </div>
                         <button
                           className="meal-entry-delete"
@@ -120,26 +140,11 @@ export default function NutritionPage() {
                   </div>
                 )}
 
-                <button
-                  className="meal-add-btn"
-                  onClick={() => setAddingMeal(type)}
-                  type="button"
-                >
-                  + Add Food
-                </button>
+                <QuickAddInput mealType={type} onAdd={quickAdd} />
               </div>
             )
           })}
         </>
-      )}
-
-      {/* Add food modal */}
-      {addingMeal && (
-        <AddFoodModal
-          mealType={addingMeal}
-          onAdd={addEntry}
-          onClose={() => setAddingMeal(null)}
-        />
       )}
     </div>
   )

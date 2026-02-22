@@ -179,6 +179,95 @@ app.post('/log', async (c) => {
 })
 
 /**
+ * POST /quick-add - Quick-add food with background Gemini enrichment
+ */
+app.post('/quick-add', async (c) => {
+  let body: unknown
+  try {
+    body = await c.req.json()
+  } catch {
+    return c.json({ error: 'Invalid JSON body' }, 400)
+  }
+
+  const schema = z.object({
+    foodName: z.string().min(1),
+    mealType: z.enum(mealTypes),
+    loggedAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD'),
+  })
+
+  const parsed = schema.safeParse(body)
+  if (!parsed.success) {
+    return c.json(
+      { error: 'Validation failed', details: parsed.error.format() },
+      400
+    )
+  }
+
+  const { foodName, mealType, loggedAt } = parsed.data
+
+  // Insert immediately with zero macros and pending status
+  const entry = db
+    .insert(foodLog)
+    .values({
+      loggedAt,
+      mealType,
+      foodName,
+      brand: null,
+      servingSize: null,
+      servings: 1,
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+      fiber: 0,
+      sugar: 0,
+      sodium: 0,
+      source: 'gemini',
+      sourceId: `quick-${Date.now()}`,
+      status: 'pending',
+    })
+    .returning()
+    .get()
+
+  // Fire-and-forget: enrich with Gemini in background
+  searchFood(foodName)
+    .then((results) => {
+      if (results.length > 0) {
+        const best = results[0]
+        db.update(foodLog)
+          .set({
+            calories: best.calories,
+            protein: best.protein,
+            carbs: best.carbs,
+            fat: best.fat,
+            fiber: best.fiber,
+            sugar: best.sugar,
+            sodium: best.sodium,
+            brand: best.brand,
+            servingSize: best.servingSize,
+            sourceId: best.sourceId,
+            status: 'complete',
+          })
+          .where(eq(foodLog.id, entry.id))
+          .run()
+      } else {
+        db.update(foodLog)
+          .set({ status: 'failed' })
+          .where(eq(foodLog.id, entry.id))
+          .run()
+      }
+    })
+    .catch(() => {
+      db.update(foodLog)
+        .set({ status: 'failed' })
+        .where(eq(foodLog.id, entry.id))
+        .run()
+    })
+
+  return c.json(entry, 201)
+})
+
+/**
  * DELETE /log/:id - Delete a food log entry
  */
 app.delete('/log/:id', async (c) => {

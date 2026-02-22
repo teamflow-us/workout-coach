@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type { FoodLogEntry, NutritionGoals, DailyTotals, MealType, MacroData } from '../../shared/types/nutrition.js'
 
 const DEFAULT_GOALS: NutritionGoals = {
@@ -30,9 +30,9 @@ export function useNutrition(date: string) {
   const [totals, setTotals] = useState<DailyTotals>(EMPTY_TOTALS)
   const [goals, setGoals] = useState<NutritionGoals>(DEFAULT_GOALS)
   const [loading, setLoading] = useState(true)
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const fetchData = useCallback(async () => {
-    setLoading(true)
     try {
       const [logRes, totalsRes, goalsRes] = await Promise.all([
         fetch(`/api/nutrition/log?date=${date}`),
@@ -54,14 +54,34 @@ export function useNutrition(date: string) {
       }
     } catch (err) {
       console.error('Failed to load nutrition data:', err)
-    } finally {
-      setLoading(false)
     }
   }, [date])
 
   useEffect(() => {
-    fetchData()
+    setLoading(true)
+    fetchData().finally(() => setLoading(false))
   }, [fetchData])
+
+  // Poll when any entry is pending
+  useEffect(() => {
+    const hasPending = entries.some((e) => e.status === 'pending')
+
+    if (hasPending && !pollRef.current) {
+      pollRef.current = setInterval(() => {
+        fetchData()
+      }, 3000)
+    } else if (!hasPending && pollRef.current) {
+      clearInterval(pollRef.current)
+      pollRef.current = null
+    }
+
+    return () => {
+      if (pollRef.current) {
+        clearInterval(pollRef.current)
+        pollRef.current = null
+      }
+    }
+  }, [entries, fetchData])
 
   const addEntry = useCallback(async (mealType: MealType, food: MacroData, servings: number) => {
     try {
@@ -95,6 +115,51 @@ export function useNutrition(date: string) {
     }
   }, [date, fetchData])
 
+  const quickAdd = useCallback(async (mealType: MealType, foodName: string) => {
+    // Optimistically add a pending entry
+    const tempEntry: FoodLogEntry = {
+      id: -Date.now(), // temporary negative ID
+      loggedAt: date,
+      mealType,
+      foodName,
+      brand: null,
+      servingSize: null,
+      servings: 1,
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+      fiber: 0,
+      sugar: 0,
+      sodium: 0,
+      source: 'gemini',
+      sourceId: `quick-${Date.now()}`,
+      status: 'pending',
+    }
+
+    setEntries((prev) => [tempEntry, ...prev])
+
+    try {
+      const res = await fetch('/api/nutrition/quick-add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ foodName, mealType, loggedAt: date }),
+      })
+
+      if (!res.ok) throw new Error(`Failed: ${res.status}`)
+
+      // Replace temp entry with real server entry
+      const created: FoodLogEntry = await res.json()
+      setEntries((prev) =>
+        prev.map((e) => (e.id === tempEntry.id ? created : e))
+      )
+    } catch (err) {
+      console.error('Quick add failed:', err)
+      // Remove the optimistic entry on failure
+      setEntries((prev) => prev.filter((e) => e.id !== tempEntry.id))
+    }
+  }, [date])
+
   const deleteEntry = useCallback(async (id: number) => {
     try {
       const res = await fetch(`/api/nutrition/log/${id}`, { method: 'DELETE' })
@@ -119,6 +184,7 @@ export function useNutrition(date: string) {
     goals,
     loading,
     addEntry,
+    quickAdd,
     deleteEntry,
     entriesForMeal,
     mealCalories,

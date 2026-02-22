@@ -84,6 +84,7 @@ export const foodLog = sqliteTable('food_log', {
   sodium: real('sodium').notNull().default(0),
   source: text('source').notNull(), // 'usda' | 'openfoodfacts'
   sourceId: text('source_id').notNull(),
+  status: text('status').notNull().default('complete'), // 'pending' | 'complete' | 'failed'
   createdAt: text('created_at').notNull().default(sql`(CURRENT_TIMESTAMP)`),
 }, (table) => [
   index('food_log_user_date_idx').on(table.loggedAt),
