@@ -9,6 +9,8 @@ type Tab = 'chat' | 'workout' | 'profile'
 type ThemeMode = 'atelier' | 'midnight'
 
 export default function App() {
+  const [showSplash, setShowSplash] = useState(true)
+  const [splashFading, setSplashFading] = useState(false)
   const [activeTab, setActiveTab] = useState<Tab>('chat')
   const [theme, setTheme] = useState<ThemeMode>(() => {
     if (typeof window === 'undefined') return 'atelier'
@@ -37,6 +39,16 @@ export default function App() {
     document.documentElement.setAttribute('data-theme', theme)
   }, [theme])
 
+  // Splash screen timer
+  useEffect(() => {
+    const fadeTimer = setTimeout(() => setSplashFading(true), 1800)
+    const hideTimer = setTimeout(() => setShowSplash(false), 2400)
+    return () => {
+      clearTimeout(fadeTimer)
+      clearTimeout(hideTimer)
+    }
+  }, [])
+
   // Activate wake lock when Workout tab is active
   useEffect(() => {
     if (activeTab === 'workout') {
@@ -60,25 +72,56 @@ export default function App() {
     setActiveTab('workout')
   }, [])
 
+  if (showSplash) {
+    return (
+      <div className={`splash-screen${splashFading ? ' fading' : ''}`}>
+        <div className="splash-content">
+          <div className="splash-icon">
+            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8 24h6v16H8V24Z" fill="currentColor" opacity="0.7" />
+              <path d="M50 24h6v16h-6V24Z" fill="currentColor" opacity="0.7" />
+              <path d="M14 20h4v24h-4V20Z" fill="currentColor" />
+              <path d="M46 20h4v24h-4V20Z" fill="currentColor" />
+              <rect x="18" y="29" width="28" height="6" rx="2" fill="currentColor" />
+              <circle cx="32" cy="14" r="3" fill="currentColor" opacity="0.35" />
+              <circle cx="32" cy="50" r="3" fill="currentColor" opacity="0.35" />
+              <path d="M28 10l4 6 4-6" stroke="currentColor" strokeWidth="1.5" fill="none" opacity="0.35" />
+              <path d="M28 54l4-6 4 6" stroke="currentColor" strokeWidth="1.5" fill="none" opacity="0.35" />
+            </svg>
+          </div>
+          <h1 className="splash-title">Gymini</h1>
+          <p className="splash-subtitle">Your AI Personal Trainer</p>
+          <div className="splash-loader">
+            <div className="splash-loader-bar" />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="app-container" data-theme={theme}>
-      <button
-        className={`memory-toggle${saveToMemory ? ' active' : ''}`}
-        onClick={() => setSaveToMemory((v) => !v)}
-        type="button"
-        aria-label={saveToMemory ? 'Memory saving is on' : 'Memory saving is off'}
-      >
-        Memory: {saveToMemory ? 'ON' : 'OFF'}
-      </button>
-      <button
-        className="theme-toggle"
-        onClick={() => setTheme(prev => (prev === 'atelier' ? 'midnight' : 'atelier'))}
-        aria-label={theme === 'atelier' ? 'Switch to midnight theme' : 'Switch to atelier theme'}
-      >
-        <span className="theme-toggle-icon" aria-hidden>
-          {theme === 'atelier' ? 'MOON' : 'SUN'}
-        </span>
-      </button>
+      {activeTab === 'chat' && (
+        <>
+          <button
+            className={`memory-toggle${saveToMemory ? ' active' : ''}`}
+            onClick={() => setSaveToMemory((v) => !v)}
+            type="button"
+            aria-label={saveToMemory ? 'Memory saving is on' : 'Memory saving is off'}
+          >
+            Memory: {saveToMemory ? 'ON' : 'OFF'}
+          </button>
+          <button
+            className="theme-toggle"
+            onClick={() => setTheme(prev => (prev === 'atelier' ? 'midnight' : 'atelier'))}
+            aria-label={theme === 'atelier' ? 'Switch to midnight theme' : 'Switch to atelier theme'}
+          >
+            <span className="theme-toggle-icon" aria-hidden>
+              {theme === 'atelier' ? 'MOON' : 'SUN'}
+            </span>
+          </button>
+        </>
+      )}
 
       {/* Tab content area */}
       <div className="tab-content">

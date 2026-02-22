@@ -953,6 +953,106 @@ button:disabled {
   font-size: var(--font-size-lg);
 }
 
+/* ---------- Splash Screen ---------- */
+
+.splash-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(199, 79, 50, 0.25), transparent 50%),
+    radial-gradient(circle at 70% 80%, rgba(29, 107, 102, 0.22), transparent 50%),
+    linear-gradient(160deg, var(--color-bg) 0%, var(--color-bg-deep) 100%);
+  transition: opacity 600ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.splash-screen.fading {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.splash-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  animation: splash-enter 800ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.splash-icon {
+  width: 80px;
+  height: 80px;
+  color: var(--color-accent);
+  margin-bottom: 8px;
+  animation: splash-icon-pulse 2s ease-in-out infinite;
+}
+
+.splash-icon svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 4px 12px rgba(199, 79, 50, 0.3));
+}
+
+.splash-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(48px, 12vw, 72px);
+  color: var(--color-text);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  text-shadow: 0 2px 0 rgba(31, 25, 18, 0.06);
+}
+
+.splash-subtitle {
+  font-family: 'Chivo Mono', monospace;
+  font-size: clamp(12px, 3vw, 15px);
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: var(--color-accent-cool);
+  margin-top: 2px;
+}
+
+.splash-loader {
+  width: 120px;
+  height: 3px;
+  background: var(--line-soft);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 28px;
+}
+
+.splash-loader-bar {
+  height: 100%;
+  width: 0%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--color-accent), var(--color-accent-cool));
+  animation: splash-load 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes splash-enter {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes splash-icon-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+
+@keyframes splash-load {
+  0% { width: 0%; }
+  60% { width: 70%; }
+  100% { width: 100%; }
+}
+
 @media (min-width: 768px) {
   .app-container {
     max-width: 760px;
