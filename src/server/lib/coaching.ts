@@ -93,7 +93,8 @@ ${workoutSection}${ragSection}
 - Be encouraging but data-driven
 - Reference specific past workouts when relevant
 - If the user reports pain or injury, immediately modify the program to avoid aggravation
-- Keep responses concise and actionable -- this is used in a mobile chat interface${ragGuidelines}`
+- Keep responses concise and actionable -- this is used in a mobile chat interface
+- When prescribing rest times, check the recent workouts and training history above for rest times used in similar exercises. Stay consistent with previously prescribed rest times unless the user requests a change or there is a training rationale to adjust (e.g. switching from hypertrophy to strength). If adjusting rest times, briefly explain why.${ragGuidelines}`
 
   return { prompt, sources }
 }
