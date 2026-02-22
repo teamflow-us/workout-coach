@@ -58,7 +58,7 @@ export async function checkChromaHealth(retries = 5, delayMs = 3000): Promise<bo
   for (let i = 0; i < retries; i++) {
     try {
       const resp = await fetch(
-        `http://${CHROMA_HOST}:${CHROMA_PORT}/api/v1/heartbeat`
+        `http://${CHROMA_HOST}:${CHROMA_PORT}/api/v2/heartbeat`
       )
       if (resp.ok) return true
     } catch {
