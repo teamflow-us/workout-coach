@@ -57,7 +57,7 @@ export async function getCollection() {
 export async function checkChromaHealth(): Promise<boolean> {
   try {
     const resp = await fetch(
-      `http://${CHROMA_HOST}:${CHROMA_PORT}/api/v2/heartbeat`
+      `http://${CHROMA_HOST}:${CHROMA_PORT}/api/v1/heartbeat`
     )
     return resp.ok
   } catch {
