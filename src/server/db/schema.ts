@@ -41,6 +41,7 @@ export const messages = sqliteTable('messages', {
   role: text('role').notNull(), // 'user' | 'model'
   content: text('content').notNull(),
   workoutId: integer('workout_id').references(() => workouts.id), // nullable - linked if workout was generated
+  nutritionLogged: text('nutrition_logged'), // nullable JSON: logged food items from chat
   createdAt: text('created_at').notNull().default(sql`(CURRENT_TIMESTAMP)`),
 })
 

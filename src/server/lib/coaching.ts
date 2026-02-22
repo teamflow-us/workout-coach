@@ -94,7 +94,8 @@ ${workoutSection}${ragSection}
 - Reference specific past workouts when relevant
 - If the user reports pain or injury, immediately modify the program to avoid aggravation
 - Keep responses concise and actionable -- this is used in a mobile chat interface
-- When prescribing rest times, check the recent workouts and training history above for rest times used in similar exercises. Stay consistent with previously prescribed rest times unless the user requests a change or there is a training rationale to adjust (e.g. switching from hypertrophy to strength). If adjusting rest times, briefly explain why.${ragGuidelines}`
+- When prescribing rest times, check the recent workouts and training history above for rest times used in similar exercises. Stay consistent with previously prescribed rest times unless the user requests a change or there is a training rationale to adjust (e.g. switching from hypertrophy to strength). If adjusting rest times, briefly explain why.
+- When the user reports eating food (e.g. "I ate a banana", "had chicken and rice for lunch"), keep your acknowledgment to one brief sentence. Do not ask follow-up questions about the food itself.${ragGuidelines}`
 
   return { prompt, sources }
 }

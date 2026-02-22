@@ -73,11 +73,12 @@ app.post('/send', async (c) => {
       }
 
       // Extract and log food items from the user's message
+      let loggedItems: Array<{ name: string; mealType: string; calories: number; protein: number; carbs: number; fat: number }> | null = null
       try {
         const foodItems = await extractFoodFromMessage(body.message)
         if (foodItems && foodItems.length > 0) {
           const today = new Date().toISOString().split('T')[0]
-          const loggedItems: Array<{ name: string; mealType: string; calories: number; protein: number; carbs: number; fat: number }> = []
+          loggedItems = []
 
           for (const item of foodItems) {
             const sourceId = `gemini-chat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
@@ -168,7 +169,7 @@ app.post('/send', async (c) => {
       // Persist both user message and AI response to DB
       await db.insert(messages).values([
         { role: 'user', content: body.message },
-        { role: 'model', content: fullText },
+        { role: 'model', content: fullText, nutritionLogged: loggedItems ? JSON.stringify(loggedItems) : null },
       ])
 
       // Fire-and-forget write-back: embed the exchange in ChromaDB

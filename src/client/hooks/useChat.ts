@@ -67,14 +67,23 @@ export function useChat() {
         id: number
         role: string
         content: string
+        nutritionLogged: string | null
         createdAt: string
       }> = await res.json()
 
-      const loaded: ChatMessage[] = dbMessages.map((m) => ({
-        role: m.role as 'user' | 'model',
-        text: m.content,
-        timestamp: new Date(m.createdAt).getTime(),
-      }))
+      const loaded: ChatMessage[] = dbMessages.map((m) => {
+        const msg: ChatMessage = {
+          role: m.role as 'user' | 'model',
+          text: m.content,
+          timestamp: new Date(m.createdAt).getTime(),
+        }
+        if (m.nutritionLogged) {
+          try {
+            msg.nutritionLogged = JSON.parse(m.nutritionLogged)
+          } catch {}
+        }
+        return msg
+      })
 
       setMessages(loaded)
     } catch (err) {
