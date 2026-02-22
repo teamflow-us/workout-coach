@@ -741,9 +741,55 @@ button:disabled {
 .set-details {
   flex: 1;
   display: flex;
-  gap: var(--spacing-md);
+  flex-direction: column;
+  gap: var(--spacing-xs);
   font-size: 18px;
   font-weight: 700;
+}
+
+.set-prescribed {
+  display: flex;
+  gap: var(--spacing-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.set-actuals {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.set-actual-input {
+  width: 72px;
+  padding: 4px 8px;
+  font-size: var(--font-size-sm);
+  font-family: 'Chivo Mono', monospace;
+  font-weight: 600;
+  border: 1px solid var(--line-soft);
+  border-radius: 6px;
+  background: var(--surface-input);
+  color: var(--color-text);
+  text-align: center;
+  -moz-appearance: textfield;
+}
+
+.set-actual-input::-webkit-inner-spin-button,
+.set-actual-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.set-actual-input::placeholder {
+  color: var(--color-text-muted);
+  opacity: 0.5;
+  font-weight: 400;
+}
+
+.set-actual-input:focus {
+  outline: none;
+  border-color: var(--color-accent-cool);
+  box-shadow: 0 0 0 2px var(--focus-ring);
 }
 
 .set-reps {
@@ -1090,5 +1136,13 @@ button:disabled {
 
   .set-done-btn {
     width: 100%;
+  }
+
+  .set-actual-input {
+    width: 100%;
+  }
+
+  .set-actuals {
+    flex-direction: column;
   }
 }

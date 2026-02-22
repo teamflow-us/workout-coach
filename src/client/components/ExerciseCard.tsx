@@ -7,6 +7,7 @@ interface ExerciseCardProps {
   completedSets: Set<string>
   onSetComplete: (setNumber: number) => void
   onStartRest: (seconds: number) => void
+  onActualsChange: (setId: number, actualReps: number | null, actualWeight: number | null) => void
 }
 
 export default function ExerciseCard({
@@ -15,6 +16,7 @@ export default function ExerciseCard({
   completedSets,
   onSetComplete,
   onStartRest,
+  onActualsChange,
 }: ExerciseCardProps) {
   const sortedSets = [...exercise.sets].sort((a, b) => a.setNumber - b.setNumber)
 
@@ -53,6 +55,7 @@ export default function ExerciseCard({
                 onSetComplete(set.setNumber)
                 handleStartRest()
               }}
+              onActualsChange={onActualsChange}
             />
           )
         })}

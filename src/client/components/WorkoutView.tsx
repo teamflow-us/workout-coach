@@ -10,6 +10,8 @@ export interface WorkoutSet {
   weight: number | null
   rpe: number | null
   notes: string | null
+  actualReps: number | null
+  actualWeight: number | null
 }
 
 export interface WorkoutExercise {
@@ -90,6 +92,21 @@ export default function WorkoutView({ workoutId, onStartRest }: WorkoutViewProps
     })
   }, [])
 
+  const handleActualsChange = useCallback(
+    async (setId: number, actualReps: number | null, actualWeight: number | null) => {
+      try {
+        await fetch(`/api/workouts/sets/${setId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ actualReps, actualWeight }),
+        })
+      } catch (err) {
+        console.error('Failed to save actual values:', err)
+      }
+    },
+    []
+  )
+
   const handlePrevExercise = () => {
     setActiveExerciseIndex(prev => Math.max(0, prev - 1))
   }
@@ -134,6 +151,7 @@ export default function WorkoutView({ workoutId, onStartRest }: WorkoutViewProps
             completedSets={completedSets}
             onSetComplete={(setNumber) => handleSetComplete(exercise.id, setNumber)}
             onStartRest={onStartRest}
+            onActualsChange={handleActualsChange}
           />
         ))}
       </div>
