@@ -1,0 +1,8 @@
+FROM chromadb/chroma:latest
+
+# Bundle seed data into the image
+COPY chroma-seed/ /chroma-seed/
+COPY scripts/seed-chroma.sh /seed-chroma.sh
+
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["/seed-chroma.sh"]

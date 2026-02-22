@@ -21,7 +21,9 @@ services:
       - default
 
   chromadb:
-    image: chromadb/chroma:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.chromadb
     container_name: workout-chromadb
     restart: unless-stopped
     volumes:
