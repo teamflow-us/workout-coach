@@ -55,6 +55,9 @@ export default function ProfileEditor() {
   const [newDietary, setNewDietary] = useState('')
   const [newGoal, setNewGoal] = useState('')
   const [newAvoid, setNewAvoid] = useState('')
+  const [newEquipment, setNewEquipment] = useState('')
+  const [newMaxLift, setNewMaxLift] = useState('')
+  const [newMaxValue, setNewMaxValue] = useState('')
 
   useEffect(() => {
     loadProfile()
@@ -221,6 +224,51 @@ export default function ProfileEditor() {
     }))
   }
 
+  const addEquipment = () => {
+    if (!newEquipment.trim()) return
+    const item = newEquipment.trim()
+    const lower = item.toLowerCase()
+    const already = profile.equipment.map(e => e.toLowerCase()).includes(lower)
+    if (already) {
+      setNewEquipment('')
+      return
+    }
+    setProfile(prev => ({
+      ...prev,
+      equipment: [...prev.equipment, item],
+    }))
+    setNewEquipment('')
+  }
+
+  const removeCustomEquipment = (item: string) => {
+    setProfile(prev => ({
+      ...prev,
+      equipment: prev.equipment.filter(e => e.toLowerCase() !== item.toLowerCase()),
+    }))
+  }
+
+  const addMaxLift = () => {
+    if (!newMaxLift.trim()) return
+    const lift = newMaxLift.trim()
+    const num = parseInt(newMaxValue, 10)
+    setProfile(prev => ({
+      ...prev,
+      maxes: {
+        ...prev.maxes,
+        [lift.toLowerCase()]: isNaN(num) ? 0 : num,
+      },
+    }))
+    setNewMaxLift('')
+    setNewMaxValue('')
+  }
+
+  const removeMax = (lift: string) => {
+    setProfile(prev => {
+      const { [lift]: _, ...rest } = prev.maxes
+      return { ...prev, maxes: rest }
+    })
+  }
+
   if (loading) {
     return (
       <div className="profile-loading">
@@ -301,6 +349,50 @@ export default function ProfileEditor() {
               />
             </div>
           ))}
+          {Object.entries(profile.maxes)
+            .filter(([key]) => !DEFAULT_MAX_LIFTS.map(l => l.toLowerCase()).includes(key))
+            .map(([lift, value]) => (
+              <div key={lift} className="profile-max-row">
+                <label className="profile-max-label" style={{ textTransform: 'capitalize' }}>{lift}</label>
+                <input
+                  className="profile-max-input"
+                  type="number"
+                  inputMode="numeric"
+                  placeholder="0"
+                  value={value || ''}
+                  onChange={e => updateMax(lift, e.target.value)}
+                />
+                <button
+                  className="profile-remove-btn tap-target"
+                  onClick={() => removeMax(lift)}
+                  aria-label={`Remove ${lift}`}
+                >
+                  x
+                </button>
+              </div>
+            ))}
+        </div>
+        <div className="profile-add-row">
+          <input
+            className="profile-add-input"
+            type="text"
+            placeholder="e.g. Bench Press"
+            value={newMaxLift}
+            onChange={e => setNewMaxLift(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && addMaxLift()}
+          />
+          <input
+            className="profile-max-input"
+            type="number"
+            inputMode="numeric"
+            placeholder="lbs"
+            value={newMaxValue}
+            onChange={e => setNewMaxValue(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && addMaxLift()}
+          />
+          <button className="btn-secondary tap-target" onClick={addMaxLift}>
+            Add
+          </button>
         </div>
       </section>
 
@@ -381,6 +473,30 @@ export default function ProfileEditor() {
               </button>
             )
           })}
+          {profile.equipment
+            .filter(item => !DEFAULT_EQUIPMENT.map(d => d.toLowerCase()).includes(item.toLowerCase()))
+            .map(item => (
+              <button
+                key={item}
+                className="profile-equipment-btn tap-target selected"
+                onClick={() => removeCustomEquipment(item)}
+              >
+                {item} x
+              </button>
+            ))}
+        </div>
+        <div className="profile-add-row">
+          <input
+            className="profile-add-input"
+            type="text"
+            placeholder="e.g. Kettlebell 35 lb"
+            value={newEquipment}
+            onChange={e => setNewEquipment(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && addEquipment()}
+          />
+          <button className="btn-secondary tap-target" onClick={addEquipment}>
+            Add
+          </button>
         </div>
       </section>
 

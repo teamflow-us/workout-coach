@@ -927,6 +927,20 @@ button:disabled {
   flex-shrink: 0;
 }
 
+.profile-remove-btn {
+  min-height: 36px;
+  min-width: 36px;
+  padding: 4px 10px;
+  background: var(--color-danger);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  font-family: 'Chivo Mono', monospace;
+  line-height: 1;
+}
+
 .profile-save {
   width: 100%;
   margin-top: var(--spacing-md);
