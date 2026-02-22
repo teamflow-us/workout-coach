@@ -1070,8 +1070,8 @@ button:disabled {
 @media (min-width: 768px) {
   .app-container {
     max-width: 760px;
-    margin: 18px auto;
-    height: calc(100dvh - 36px);
+    margin: 32px auto 18px;
+    height: calc(100dvh - 50px);
     border-radius: 28px;
     border: 2px solid var(--line-soft);
     overflow: hidden;
