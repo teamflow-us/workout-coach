@@ -1157,3 +1157,526 @@ button:disabled {
     flex-direction: column;
   }
 }
+
+/* ---------- Nutrition Page ---------- */
+
+.nutrition-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: var(--spacing-md);
+  gap: var(--spacing-md);
+}
+
+.nutrition-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--color-text-muted);
+  font-family: 'Chivo Mono', monospace;
+}
+
+.nutrition-date-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+}
+
+.nutrition-date-btn {
+  min-height: 38px;
+  min-width: 38px;
+  padding: var(--spacing-sm);
+  font-family: 'Chivo Mono', monospace;
+  font-weight: 700;
+}
+
+.nutrition-date-label {
+  font-size: var(--font-size-lg);
+  font-family: 'DM Serif Display', serif;
+  min-width: 120px;
+  text-align: center;
+}
+
+/* Macro Rings */
+
+.macro-rings {
+  display: flex;
+  justify-content: space-around;
+  padding: var(--spacing-sm) 0;
+  gap: var(--spacing-xs);
+}
+
+.macro-ring {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  position: relative;
+}
+
+.macro-ring svg {
+  display: block;
+}
+
+.macro-ring-value {
+  font-size: var(--font-size-md);
+  font-weight: 700;
+  font-family: 'Chivo Mono', monospace;
+  margin-top: 4px;
+  line-height: 1;
+}
+
+.macro-ring-unit {
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.macro-ring-label {
+  font-size: 11px;
+  font-family: 'Chivo Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+}
+
+.macro-ring-target {
+  font-size: 11px;
+  font-family: 'Chivo Mono', monospace;
+  color: var(--color-text-muted);
+  opacity: 0.7;
+}
+
+/* Meal Sections */
+
+.meal-section {
+  background: var(--color-surface);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+  padding: var(--spacing-md);
+  box-shadow: var(--shadow-hard);
+}
+
+.meal-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-sm);
+}
+
+.meal-title {
+  font-size: var(--font-size-lg);
+  font-family: 'DM Serif Display', serif;
+}
+
+.meal-calories {
+  font-size: var(--font-size-sm);
+  font-family: 'Chivo Mono', monospace;
+  color: var(--color-text-muted);
+}
+
+.meal-entries {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-sm);
+}
+
+.meal-entry {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-surface-elevated);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line-soft);
+}
+
+.meal-entry-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.meal-entry-name {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.meal-entry-servings {
+  font-weight: 400;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.meal-entry-macros {
+  font-size: var(--font-size-sm);
+  font-family: 'Chivo Mono', monospace;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.meal-entry-delete {
+  min-height: 32px;
+  min-width: 32px;
+  padding: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  border: none;
+  font-size: 18px;
+  line-height: 1;
+  opacity: 0.6;
+}
+
+.meal-entry-delete:hover {
+  opacity: 1;
+  color: var(--color-danger);
+}
+
+.meal-add-btn {
+  width: 100%;
+  min-height: 40px;
+  padding: var(--spacing-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  border: 2px dashed var(--line-strong);
+  border-radius: var(--radius-sm);
+  font-family: 'Chivo Mono', monospace;
+  font-size: var(--font-size-sm);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.meal-add-btn:hover {
+  border-color: var(--color-accent-cool);
+  color: var(--color-accent-cool);
+}
+
+/* Add Food Modal */
+
+.food-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay-bg);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 100;
+  padding: var(--spacing-md);
+}
+
+.food-modal {
+  width: 100%;
+  max-width: 520px;
+  max-height: 85vh;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  border: 1px solid var(--line-soft);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slide-up 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.food-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--line-soft);
+  flex-shrink: 0;
+}
+
+.food-modal-title {
+  font-size: var(--font-size-lg);
+  font-family: 'DM Serif Display', serif;
+}
+
+.food-modal-close {
+  min-height: 36px;
+  min-width: 36px;
+  padding: 4px 10px;
+  background: transparent;
+  color: var(--color-text-muted);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  font-family: 'Chivo Mono', monospace;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
+
+.food-search-bar {
+  display: flex;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  flex-shrink: 0;
+}
+
+.food-search-input {
+  flex: 1;
+  min-height: var(--tap-target);
+  padding: var(--spacing-sm) 14px;
+  font-size: var(--font-size-md);
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--surface-input);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  outline: none;
+}
+
+.food-search-input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--focus-accent-ring);
+}
+
+.food-search-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.food-barcode-btn {
+  white-space: nowrap;
+  font-family: 'Chivo Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.food-results {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 var(--spacing-md) var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.food-results-loading,
+.food-results-empty {
+  text-align: center;
+  color: var(--color-text-muted);
+  padding: var(--spacing-lg);
+  font-family: 'Chivo Mono', monospace;
+  font-size: var(--font-size-sm);
+}
+
+.food-result-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  text-align: left;
+  width: 100%;
+}
+
+.food-result-item:hover {
+  border-color: var(--color-accent-cool);
+}
+
+.food-result-name {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.food-result-brand {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.food-result-macros {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  font-family: 'Chivo Mono', monospace;
+  margin-top: 2px;
+}
+
+.food-result-cal {
+  font-weight: 700;
+}
+
+.food-result-macro-line {
+  color: var(--color-text-muted);
+}
+
+.food-result-source {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.food-result-source.usda {
+  background: color-mix(in srgb, var(--color-accent-cool) 20%, transparent);
+  color: var(--color-accent-cool);
+}
+
+.food-result-source.openfoodfacts {
+  background: color-mix(in srgb, var(--color-warning) 20%, transparent);
+  color: var(--color-warning);
+}
+
+.food-result-serving {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+/* Food Detail (selected food) */
+
+.food-detail {
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  overflow-y: auto;
+}
+
+.food-detail-back {
+  align-self: flex-start;
+  background: transparent;
+  color: var(--color-accent-cool);
+  border: none;
+  font-family: 'Chivo Mono', monospace;
+  font-size: var(--font-size-sm);
+  padding: var(--spacing-xs) 0;
+  min-height: auto;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.food-detail-name {
+  font-size: var(--font-size-lg);
+  font-family: 'DM Serif Display', serif;
+}
+
+.food-detail-brand {
+  font-size: var(--font-size-md);
+  color: var(--color-text-muted);
+  margin-top: -8px;
+}
+
+.food-detail-serving {
+  font-size: var(--font-size-sm);
+  font-family: 'Chivo Mono', monospace;
+  color: var(--color-text-muted);
+}
+
+.food-servings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.food-servings-label {
+  font-size: var(--font-size-sm);
+  font-family: 'Chivo Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+}
+
+.food-servings-presets {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.food-serving-btn {
+  min-height: 40px;
+  min-width: 48px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-surface-elevated);
+  color: var(--color-text);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  font-family: 'Chivo Mono', monospace;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.food-serving-btn.active {
+  background: var(--color-accent-cool);
+  color: white;
+  border-color: transparent;
+}
+
+.food-serving-input {
+  width: 64px;
+  min-height: 40px;
+  padding: var(--spacing-sm);
+  font-size: var(--font-size-md);
+  font-family: 'Chivo Mono', monospace;
+  font-weight: 600;
+  color: var(--color-text);
+  background: var(--surface-input);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  text-align: center;
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.food-serving-input::-webkit-inner-spin-button,
+.food-serving-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.food-serving-input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--focus-accent-ring);
+}
+
+.food-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-md);
+  background: var(--color-surface-elevated);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line-soft);
+}
+
+.food-preview-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--font-size-md);
+}
+
+.food-preview-row span {
+  color: var(--color-text-muted);
+}
+
+.food-preview-row strong {
+  font-family: 'Chivo Mono', monospace;
+}
+
+.food-add-btn {
+  width: 100%;
+}

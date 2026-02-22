@@ -3,9 +3,10 @@ import Chat from './components/Chat'
 import WorkoutView from './components/WorkoutView'
 import RestTimer from './components/RestTimer'
 import ProfileEditor from './components/ProfileEditor'
+import NutritionPage from './components/NutritionPage'
 import { useWakeLock } from './hooks/useWakeLock'
 
-type Tab = 'chat' | 'workout' | 'profile'
+type Tab = 'chat' | 'workout' | 'nutrition' | 'profile'
 type ThemeMode = 'atelier' | 'midnight'
 
 export default function App() {
@@ -134,6 +135,7 @@ export default function App() {
             onStartRest={handleStartRest}
           />
         )}
+        {activeTab === 'nutrition' && <NutritionPage />}
         {activeTab === 'profile' && <ProfileEditor />}
       </div>
 
@@ -168,6 +170,17 @@ export default function App() {
             </svg>
           </span>
           <span className="tab-text">Workout</span>
+        </button>
+        <button
+          className={`tab-button${activeTab === 'nutrition' ? ' active' : ''}`}
+          onClick={() => setActiveTab('nutrition')}
+        >
+          <span className="tab-icon" aria-hidden>
+            <svg viewBox="0 0 24 24" role="img">
+              <path d="M12 2C9.5 2 8 4 8 6c0 3 4 7 4 7s4-4 4-7c0-2-1.5-4-4-4Zm0 5a1 1 0 1 1 0-2 1 1 0 0 1 0 2ZM5 15c0-1 1-2 3-2.5.7.9 1.5 1.7 2.2 2.3L9 17H5v-2Zm14 0v2h-4l-1.2-2.2c.7-.6 1.5-1.4 2.2-2.3 2 .5 3 1.5 3 2.5ZM5 19h14v2H5v-2Z" fill="currentColor" />
+            </svg>
+          </span>
+          <span className="tab-text">Nutrition</span>
         </button>
         <button
           className={`tab-button${activeTab === 'profile' ? ' active' : ''}`}

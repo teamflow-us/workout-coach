@@ -8,6 +8,7 @@ import workoutRoutes from './routes/workouts.js'
 import chatRoutes from './routes/chat.js'
 import profileRoutes from './routes/profile.js'
 import ragRoutes from './routes/rag.js'
+import nutritionRoutes from './routes/nutrition.js'
 import { checkChromaHealth, getCollection } from './lib/chroma.js'
 import { seedChroma } from './lib/seed-chroma.js'
 
@@ -22,6 +23,7 @@ app.route('/api/workouts', workoutRoutes)
 app.route('/api/chat', chatRoutes)
 app.route('/api/profile', profileRoutes)
 app.route('/api/rag', ragRoutes)
+app.route('/api/nutrition', nutritionRoutes)
 
 // Serve static client build in production
 app.use('/assets/*', serveStatic({ root: './dist/client' }))
