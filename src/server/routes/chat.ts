@@ -122,7 +122,9 @@ const workoutPlanSchema = z.object({
       restSeconds: z
         .number()
         .int()
-        .describe('Rest between sets in seconds'),
+        .describe(
+          'Rest between sets in seconds. Use rest times consistent with previous workouts for the same exercise unless there is a reason to change.'
+        ),
       notes: z.string().optional().describe('Form cues or modifications'),
     })
   ),
@@ -208,7 +210,13 @@ app.post('/generate-workout', async (c) => {
     })
 
     // Persist the conversation exchange as messages
-    const aiSummary = `Generated workout: ${plan.programName} with ${plan.exercises.length} exercises`
+    const exerciseDetails = plan.exercises
+      .map(
+        (ex) =>
+          `- ${ex.name}: ${ex.sets}x${ex.reps} @ ${ex.weight}lbs, rest ${ex.restSeconds}s${ex.notes ? ` (${ex.notes})` : ''}`
+      )
+      .join('\n')
+    const aiSummary = `Generated workout: ${plan.programName}\n${exerciseDetails}`
     await db.insert(messages).values([
       { role: 'user', content: body.prompt },
       {

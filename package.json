@@ -18,6 +18,7 @@
   "type": "module",
   "dependencies": {
     "@chroma-core/google-gemini": "^0.1.8",
+    "@deepgram/sdk": "^4.11.3",
     "@google/genai": "^1.42.0",
     "@hono/node-server": "^1.19.9",
     "better-sqlite3": "^12.6.2",

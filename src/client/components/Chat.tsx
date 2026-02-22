@@ -1,5 +1,6 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useChat } from '../hooks/useChat'
+import { useVoiceInput } from '../hooks/useVoiceInput'
 import ChatMessage from './ChatMessage'
 
 interface ChatProps {
@@ -13,6 +14,13 @@ export default function Chat({ onWorkoutGenerated, saveToMemory }: ChatProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const hasScrolledToHistory = useRef(false)
+
+  const handleTranscript = useCallback((text: string) => {
+    setInput((prev) => (prev ? prev + ' ' + text : text))
+    inputRef.current?.focus()
+  }, [])
+
+  const { voiceState, error: voiceError, toggleRecording, clearError } = useVoiceInput(handleTranscript)
 
   // Auto-scroll to bottom: instant on initial history load, smooth for new messages
   useEffect(() => {
@@ -54,7 +62,16 @@ export default function Chat({ onWorkoutGenerated, saveToMemory }: ChatProps) {
   return (
     <div className="chat-container">
       <div className="chat-messages">
-        {messages.length === 0 ? (
+        {!historyLoaded ? (
+          <div className="chat-skeleton">
+            <div className="skeleton-msg skeleton-user" />
+            <div className="skeleton-msg skeleton-model skeleton-wide" />
+            <div className="skeleton-msg skeleton-user skeleton-narrow" />
+            <div className="skeleton-msg skeleton-model" />
+            <div className="skeleton-msg skeleton-user" />
+            <div className="skeleton-msg skeleton-model skeleton-wide" />
+          </div>
+        ) : messages.length === 0 ? (
           <div className="chat-messages-empty">
             Start a conversation with your AI coach
           </div>
@@ -85,7 +102,39 @@ export default function Chat({ onWorkoutGenerated, saveToMemory }: ChatProps) {
           >
             Generate Workout
           </button>
-          <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+          {voiceError && (
+            <div className="voice-error" onClick={clearError} role="alert">
+              {voiceError}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 'var(--spacing-sm)', alignItems: 'center' }}>
+            <button
+              className={`btn-voice tap-target${voiceState === 'recording' ? ' recording' : ''}${voiceState === 'transcribing' ? ' transcribing' : ''}`}
+              onClick={toggleRecording}
+              disabled={isStreaming || voiceState === 'transcribing'}
+              aria-label={
+                voiceState === 'recording'
+                  ? 'Stop recording'
+                  : voiceState === 'transcribing'
+                    ? 'Transcribing...'
+                    : 'Start voice message'
+              }
+              type="button"
+            >
+              {voiceState === 'recording' ? (
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+                  <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" />
+                </svg>
+              ) : voiceState === 'transcribing' ? (
+                <div className="voice-spinner" />
+              ) : (
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+                  <rect x="9" y="2" width="6" height="12" rx="3" fill="currentColor" />
+                  <path d="M5 11a7 7 0 0 0 14 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  <line x1="12" y1="18" x2="12" y2="22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              )}
+            </button>
             <input
               ref={inputRef}
               className="chat-input"
@@ -93,7 +142,15 @@ export default function Chat({ onWorkoutGenerated, saveToMemory }: ChatProps) {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={isStreaming ? 'AI is responding...' : 'Message your coach...'}
+              placeholder={
+                voiceState === 'recording'
+                  ? 'Listening...'
+                  : voiceState === 'transcribing'
+                    ? 'Transcribing...'
+                    : isStreaming
+                      ? 'AI is responding...'
+                      : 'Message your coach...'
+              }
               disabled={isStreaming}
               autoComplete="off"
             />
