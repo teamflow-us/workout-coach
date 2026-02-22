@@ -52,6 +52,7 @@ export function useVoiceInput(onTranscript: (text: string) => void) {
   )
 
   const startRecording = useCallback(async () => {
+    if (voiceState !== 'idle') return
     setError(null)
 
     if (!navigator.mediaDevices?.getUserMedia) {
@@ -109,7 +110,7 @@ export function useVoiceInput(onTranscript: (text: string) => void) {
         setError('Could not access microphone')
       }
     }
-  }, [transcribe, stopMediaStream])
+  }, [voiceState, transcribe, stopMediaStream])
 
   const stopRecording = useCallback(() => {
     const recorder = mediaRecorderRef.current
@@ -118,21 +119,13 @@ export function useVoiceInput(onTranscript: (text: string) => void) {
     }
   }, [])
 
-  const toggleRecording = useCallback(() => {
-    if (voiceState === 'recording') {
-      stopRecording()
-    } else if (voiceState === 'idle') {
-      startRecording()
-    }
-    // If transcribing, ignore toggle
-  }, [voiceState, startRecording, stopRecording])
-
   const clearError = useCallback(() => setError(null), [])
 
   return {
     voiceState,
     error,
-    toggleRecording,
+    startRecording,
+    stopRecording,
     clearError,
   }
 }

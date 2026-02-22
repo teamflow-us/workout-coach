@@ -16,11 +16,14 @@ export default function Chat({ onWorkoutGenerated, saveToMemory }: ChatProps) {
   const hasScrolledToHistory = useRef(false)
 
   const handleTranscript = useCallback((text: string) => {
-    setInput((prev) => (prev ? prev + ' ' + text : text))
-    inputRef.current?.focus()
-  }, [])
+    // Auto-send: combine any existing input text with the transcript
+    const existing = input.trim()
+    const message = existing ? existing + ' ' + text : text
+    sendMessage(message, saveToMemory)
+    setInput('')
+  }, [input, sendMessage, saveToMemory])
 
-  const { voiceState, error: voiceError, toggleRecording, clearError } = useVoiceInput(handleTranscript)
+  const { voiceState, error: voiceError, startRecording, stopRecording, clearError } = useVoiceInput(handleTranscript)
 
   // Auto-scroll to bottom: instant on initial history load, smooth for new messages
   useEffect(() => {
@@ -111,14 +114,26 @@ export default function Chat({ onWorkoutGenerated, saveToMemory }: ChatProps) {
           <div style={{ display: 'flex', gap: 'var(--spacing-sm)', alignItems: 'center' }}>
             <button
               className={`btn-voice tap-target${voiceState === 'recording' ? ' recording' : ''}${voiceState === 'transcribing' ? ' transcribing' : ''}`}
-              onClick={toggleRecording}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                if (!isStreaming && voiceState === 'idle') {
+                  ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
+                  startRecording()
+                }
+              }}
+              onPointerUp={() => {
+                if (voiceState === 'recording') stopRecording()
+              }}
+              onPointerLeave={() => {
+                if (voiceState === 'recording') stopRecording()
+              }}
               disabled={isStreaming || voiceState === 'transcribing'}
               aria-label={
                 voiceState === 'recording'
-                  ? 'Stop recording'
+                  ? 'Release to send'
                   : voiceState === 'transcribing'
                     ? 'Transcribing...'
-                    : 'Start voice message'
+                    : 'Hold to record'
               }
               type="button"
             >
