@@ -54,7 +54,16 @@ export default function Chat({ onWorkoutGenerated, saveToMemory }: ChatProps) {
   return (
     <div className="chat-container">
       <div className="chat-messages">
-        {messages.length === 0 ? (
+        {!historyLoaded ? (
+          <div className="chat-skeleton">
+            <div className="skeleton-msg skeleton-user" />
+            <div className="skeleton-msg skeleton-model skeleton-wide" />
+            <div className="skeleton-msg skeleton-user skeleton-narrow" />
+            <div className="skeleton-msg skeleton-model" />
+            <div className="skeleton-msg skeleton-user" />
+            <div className="skeleton-msg skeleton-model skeleton-wide" />
+          </div>
+        ) : messages.length === 0 ? (
           <div className="chat-messages-empty">
             Start a conversation with your AI coach
           </div>

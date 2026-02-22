@@ -380,6 +380,57 @@ body::before {
   opacity: 0.85;
 }
 
+/* Skeleton loader for chat history */
+.chat-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  padding: var(--spacing-sm) 0;
+}
+
+.skeleton-msg {
+  border-radius: var(--radius);
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+.skeleton-user {
+  align-self: flex-end;
+  width: 55%;
+  height: 52px;
+  background: color-mix(in srgb, var(--color-accent) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 10%, transparent);
+  border-bottom-right-radius: 5px;
+}
+
+.skeleton-model {
+  align-self: flex-start;
+  width: 65%;
+  height: 64px;
+  background: color-mix(in srgb, var(--color-surface-elevated) 70%, transparent);
+  border: 1px solid var(--line-soft);
+  border-bottom-left-radius: 5px;
+}
+
+.skeleton-wide {
+  width: 78%;
+  height: 80px;
+}
+
+.skeleton-narrow {
+  width: 40%;
+  height: 44px;
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
 @keyframes lift-in {
   from {
     opacity: 0;
