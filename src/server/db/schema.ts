@@ -1,19 +1,19 @@
-import { sqliteTable, integer, text, real, index, uniqueIndex } from 'drizzle-orm/sqlite-core'
+import { pgTable, serial, integer, text, real, index, uniqueIndex, vector } from 'drizzle-orm/pg-core'
 import { relations, sql } from 'drizzle-orm'
 
 // ---------- Tables ----------
 
-export const workouts = sqliteTable('workouts', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const workouts = pgTable('workouts', {
+  id: serial('id').primaryKey(),
   date: text('date').notNull(), // ISO date string (YYYY-MM-DD)
   programName: text('program_name'),
   notes: text('notes'),
   feedback: text('feedback'),
-  createdAt: text('created_at').notNull().default(sql`(CURRENT_TIMESTAMP)`),
+  createdAt: text('created_at').notNull().default(sql`NOW()`),
 })
 
-export const exercises = sqliteTable('exercises', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const exercises = pgTable('exercises', {
+  id: serial('id').primaryKey(),
   workoutId: integer('workout_id')
     .notNull()
     .references(() => workouts.id),
@@ -22,8 +22,8 @@ export const exercises = sqliteTable('exercises', {
   restSeconds: integer('rest_seconds'), // rest between sets in seconds
 })
 
-export const sets = sqliteTable('sets', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const sets = pgTable('sets', {
+  id: serial('id').primaryKey(),
   exerciseId: integer('exercise_id')
     .notNull()
     .references(() => exercises.id),
@@ -36,40 +36,40 @@ export const sets = sqliteTable('sets', {
   actualWeight: real('actual_weight'),  // what the user actually used; null = followed plan
 })
 
-export const messages = sqliteTable('messages', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const messages = pgTable('messages', {
+  id: serial('id').primaryKey(),
   role: text('role').notNull(), // 'user' | 'model'
   content: text('content').notNull(),
   workoutId: integer('workout_id').references(() => workouts.id), // nullable - linked if workout was generated
   nutritionLogged: text('nutrition_logged'), // nullable JSON: logged food items from chat
-  createdAt: text('created_at').notNull().default(sql`(CURRENT_TIMESTAMP)`),
+  createdAt: text('created_at').notNull().default(sql`NOW()`),
 })
 
-export const coachingProfiles = sqliteTable('coaching_profiles', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const coachingProfiles = pgTable('coaching_profiles', {
+  id: serial('id').primaryKey(),
   biometrics: text('biometrics').notNull().default('{}'), // JSON: { "height": "6'6\"", "weight": 209, "age": 42, "bodyType": "hard-gainer" }
   maxes: text('maxes').notNull().default('{}'), // JSON: { "floor press": 145, "overhead press": 60, ... }
   injuries: text('injuries').notNull().default('[]'), // JSON: ["left shoulder impingement"]
   equipment: text('equipment').notNull().default('[]'), // JSON: ["barbell", "dumbbells", "cable machine"]
   dietaryConstraints: text('dietary_constraints').notNull().default('[]'), // JSON: ["gluten-free"]
   preferences: text('preferences').notNull().default('{}'), // JSON: { "daysPerWeek": 4, "sessionMinutes": 60, "goals": [...] }
-  updatedAt: text('updated_at').notNull().default(sql`(CURRENT_TIMESTAMP)`),
+  updatedAt: text('updated_at').notNull().default(sql`NOW()`),
 })
 
 // ---------- Nutrition Tables ----------
 
-export const nutritionGoals = sqliteTable('nutrition_goals', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const nutritionGoals = pgTable('nutrition_goals', {
+  id: serial('id').primaryKey(),
   caloriesTarget: integer('calories_target').notNull().default(2000),
   proteinTarget: integer('protein_target').notNull().default(150),
   carbsTarget: integer('carbs_target').notNull().default(200),
   fatTarget: integer('fat_target').notNull().default(65),
   fiberTarget: integer('fiber_target').notNull().default(30),
-  updatedAt: text('updated_at').notNull().default(sql`(CURRENT_TIMESTAMP)`),
+  updatedAt: text('updated_at').notNull().default(sql`NOW()`),
 })
 
-export const foodLog = sqliteTable('food_log', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const foodLog = pgTable('food_log', {
+  id: serial('id').primaryKey(),
   loggedAt: text('logged_at').notNull(), // YYYY-MM-DD
   mealType: text('meal_type').notNull(), // 'breakfast' | 'lunch' | 'dinner' | 'snack'
   foodName: text('food_name').notNull(),
@@ -86,13 +86,13 @@ export const foodLog = sqliteTable('food_log', {
   source: text('source').notNull(), // 'usda' | 'openfoodfacts'
   sourceId: text('source_id').notNull(),
   status: text('status').notNull().default('complete'), // 'pending' | 'complete' | 'failed'
-  createdAt: text('created_at').notNull().default(sql`(CURRENT_TIMESTAMP)`),
+  createdAt: text('created_at').notNull().default(sql`NOW()`),
 }, (table) => [
   index('food_log_user_date_idx').on(table.loggedAt),
 ])
 
-export const favoriteFoods = sqliteTable('favorite_foods', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const favoriteFoods = pgTable('favorite_foods', {
+  id: serial('id').primaryKey(),
   foodName: text('food_name').notNull(),
   brand: text('brand'),
   servingSize: text('serving_size'),
@@ -107,10 +107,24 @@ export const favoriteFoods = sqliteTable('favorite_foods', {
   source: text('source').notNull(), // 'usda' | 'openfoodfacts'
   sourceId: text('source_id').notNull(),
   useCount: integer('use_count').notNull().default(1),
-  createdAt: text('created_at').notNull().default(sql`(CURRENT_TIMESTAMP)`),
+  createdAt: text('created_at').notNull().default(sql`NOW()`),
 }, (table) => [
   uniqueIndex('favorite_foods_source_id_idx').on(table.source, table.sourceId),
 ])
+
+// ---------- Coaching Embeddings (pgvector) ----------
+
+export const coachingEmbeddings = pgTable('coaching_embeddings', {
+  id: serial('id').primaryKey(),
+  embeddingId: text('embedding_id').notNull().unique(),
+  document: text('document').notNull(),
+  embedding: vector('embedding', { dimensions: 768 }),
+  date: text('date'),
+  type: text('type'),
+  exercisesCsv: text('exercises_csv'),
+  muscleGroupsCsv: text('muscle_groups_csv'),
+  createdAt: text('created_at').notNull().default(sql`NOW()`),
+})
 
 // ---------- Relations ----------
 

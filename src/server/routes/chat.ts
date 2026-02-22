@@ -83,8 +83,8 @@ app.post('/send', async (c) => {
           for (const item of foodItems) {
             const sourceId = `gemini-chat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 
-            db.transaction((tx) => {
-              tx.insert(foodLog)
+            await db.transaction(async (tx) => {
+              await tx.insert(foodLog)
                 .values({
                   loggedAt: today,
                   mealType: item.mealType,
@@ -102,10 +102,9 @@ app.post('/send', async (c) => {
                   source: 'gemini',
                   sourceId,
                 })
-                .run()
 
               // Upsert favorite
-              const existing = tx
+              const [existing] = await tx
                 .select()
                 .from(favoriteFoods)
                 .where(
@@ -114,15 +113,13 @@ app.post('/send', async (c) => {
                     eq(favoriteFoods.foodName, item.name),
                   )
                 )
-                .get()
 
               if (existing) {
-                tx.update(favoriteFoods)
+                await tx.update(favoriteFoods)
                   .set({ useCount: existing.useCount + 1 })
                   .where(eq(favoriteFoods.id, existing.id))
-                  .run()
               } else {
-                tx.insert(favoriteFoods)
+                await tx.insert(favoriteFoods)
                   .values({
                     foodName: item.name,
                     brand: null,
@@ -137,7 +134,6 @@ app.post('/send', async (c) => {
                     source: 'gemini',
                     sourceId,
                   })
-                  .run()
               }
             })
 
@@ -255,10 +251,10 @@ app.post('/generate-workout', async (c) => {
       maxes
     )
 
-    // Save the workout to the database (transaction-based, matching existing pattern)
+    // Save the workout to the database (transaction-based)
     const today = new Date().toISOString().split('T')[0]
-    const savedWorkout = db.transaction((tx) => {
-      const insertedWorkout = tx
+    const savedWorkout = await db.transaction(async (tx) => {
+      const [insertedWorkout] = await tx
         .insert(workouts)
         .values({
           date: today,
@@ -266,11 +262,10 @@ app.post('/generate-workout', async (c) => {
           notes: plan.notes ?? null,
         })
         .returning()
-        .get()
 
       for (let i = 0; i < plan.exercises.length; i++) {
         const exercise = plan.exercises[i]
-        const insertedExercise = tx
+        const [insertedExercise] = await tx
           .insert(exercises)
           .values({
             workoutId: insertedWorkout.id,
@@ -279,11 +274,10 @@ app.post('/generate-workout', async (c) => {
             restSeconds: exercise.restSeconds,
           })
           .returning()
-          .get()
 
         // Create individual set records for each set count
         for (let s = 1; s <= exercise.sets; s++) {
-          tx.insert(sets)
+          await tx.insert(sets)
             .values({
               exerciseId: insertedExercise.id,
               setNumber: s,
@@ -291,7 +285,6 @@ app.post('/generate-workout', async (c) => {
               weight: exercise.weight,
               notes: exercise.notes ?? null,
             })
-            .run()
         }
       }
 
@@ -315,7 +308,7 @@ app.post('/generate-workout', async (c) => {
       },
     ])
 
-    // Fire-and-forget write-back: embed the exchange in ChromaDB
+    // Fire-and-forget write-back: embed the exchange
     if (body.saveToMemory !== false) {
       const combinedText = body.prompt + ' ' + aiSummary
       const meta = extractMetadata(combinedText)

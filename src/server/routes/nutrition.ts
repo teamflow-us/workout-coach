@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { eq, desc, sql, and } from 'drizzle-orm'
+import { eq, desc, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '../db/index.js'
 import { foodLog, nutritionGoals, favoriteFoods } from '../db/schema.js'
@@ -112,9 +112,9 @@ app.post('/log', async (c) => {
 
   const data = parsed.data
 
-  const result = db.transaction((tx) => {
+  const result = await db.transaction(async (tx) => {
     // Insert food log entry
-    const entry = tx
+    const [entry] = await tx
       .insert(foodLog)
       .values({
         loggedAt: data.loggedAt,
@@ -134,10 +134,9 @@ app.post('/log', async (c) => {
         sourceId: data.sourceId,
       })
       .returning()
-      .get()
 
     // Upsert favorite: increment useCount if exists, otherwise insert
-    const existing = tx
+    const [existing] = await tx
       .select()
       .from(favoriteFoods)
       .where(
@@ -146,15 +145,13 @@ app.post('/log', async (c) => {
           eq(favoriteFoods.sourceId, data.sourceId),
         )
       )
-      .get()
 
     if (existing) {
-      tx.update(favoriteFoods)
+      await tx.update(favoriteFoods)
         .set({ useCount: existing.useCount + 1 })
         .where(eq(favoriteFoods.id, existing.id))
-        .run()
     } else {
-      tx.insert(favoriteFoods)
+      await tx.insert(favoriteFoods)
         .values({
           foodName: data.foodName,
           brand: data.brand ?? null,
@@ -169,7 +166,6 @@ app.post('/log', async (c) => {
           source: data.source,
           sourceId: data.sourceId,
         })
-        .run()
     }
 
     return entry
@@ -206,7 +202,7 @@ app.post('/quick-add', async (c) => {
   const { foodName, mealType, loggedAt } = parsed.data
 
   // Insert immediately with zero macros and pending status
-  const entry = db
+  const [entry] = await db
     .insert(foodLog)
     .values({
       loggedAt,
@@ -227,14 +223,13 @@ app.post('/quick-add', async (c) => {
       status: 'pending',
     })
     .returning()
-    .get()
 
   // Fire-and-forget: enrich with Gemini in background
   searchFood(foodName)
-    .then((results) => {
+    .then(async (results) => {
       if (results.length > 0) {
         const best = results[0]
-        db.update(foodLog)
+        await db.update(foodLog)
           .set({
             calories: best.calories,
             protein: best.protein,
@@ -249,19 +244,16 @@ app.post('/quick-add', async (c) => {
             status: 'complete',
           })
           .where(eq(foodLog.id, entry.id))
-          .run()
       } else {
-        db.update(foodLog)
+        await db.update(foodLog)
           .set({ status: 'failed' })
           .where(eq(foodLog.id, entry.id))
-          .run()
       }
     })
-    .catch(() => {
-      db.update(foodLog)
+    .catch(async () => {
+      await db.update(foodLog)
         .set({ status: 'failed' })
         .where(eq(foodLog.id, entry.id))
-        .run()
     })
 
   return c.json(entry, 201)
@@ -277,17 +269,16 @@ app.delete('/log/:id', async (c) => {
     return c.json({ error: 'Invalid log entry ID' }, 400)
   }
 
-  const existing = await db
+  const [existing] = await db
     .select()
     .from(foodLog)
     .where(eq(foodLog.id, id))
-    .get()
 
   if (!existing) {
     return c.json({ error: 'Log entry not found' }, 404)
   }
 
-  await db.delete(foodLog).where(eq(foodLog.id, id)).run()
+  await db.delete(foodLog).where(eq(foodLog.id, id))
 
   return c.json({ success: true })
 })
@@ -345,7 +336,7 @@ app.get('/totals', async (c) => {
  * GET /goals - Get macro goals (return defaults if none set)
  */
 app.get('/goals', async (c) => {
-  const goals = await db.select().from(nutritionGoals).get()
+  const [goals] = await db.select().from(nutritionGoals)
 
   if (!goals) {
     return c.json({
@@ -386,7 +377,7 @@ app.put('/goals', async (c) => {
   }
 
   const data = parsed.data
-  const existing = await db.select().from(nutritionGoals).get()
+  const [existing] = await db.select().from(nutritionGoals)
 
   const values = {
     caloriesTarget: data.caloriesTarget,

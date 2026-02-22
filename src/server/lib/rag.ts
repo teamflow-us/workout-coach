@@ -1,5 +1,8 @@
 import { createHash } from 'crypto'
-import { getCollection } from './chroma.js'
+import { sql } from 'drizzle-orm'
+import { db } from '../db/index.js'
+import { coachingEmbeddings } from '../db/schema.js'
+import { ai } from './gemini.js'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -11,6 +14,34 @@ export interface RetrievedSession {
   snippet: string // first 800 chars for prompt injection
   metadata: Record<string, unknown>
   score: number
+}
+
+// ---------------------------------------------------------------------------
+// Embedding config
+// ---------------------------------------------------------------------------
+
+const EMBEDDING_MODEL = 'gemini-embedding-001'
+const EMBEDDING_DIMENSIONS = 768
+
+/**
+ * L2-normalize a vector for cosine similarity at non-3072 dimensions.
+ * MRL-reduced embeddings (768-dim from 3072) require normalization.
+ */
+function normalize(vec: number[]): number[] {
+  const norm = Math.sqrt(vec.reduce((sum, v) => sum + v * v, 0))
+  return norm > 0 ? vec.map((v) => v / norm) : vec
+}
+
+/**
+ * Generate a normalized embedding for a single text using Gemini.
+ */
+async function generateEmbedding(text: string): Promise<number[]> {
+  const result = await ai.models.embedContent({
+    model: EMBEDDING_MODEL,
+    contents: [text],
+    config: { outputDimensionality: EMBEDDING_DIMENSIONS },
+  })
+  return normalize(result.embeddings![0].values!)
 }
 
 // ---------------------------------------------------------------------------
@@ -91,7 +122,7 @@ export function daysBetween(dateA: string, dateB: string): number {
 // ---------------------------------------------------------------------------
 
 /**
- * Query ChromaDB for sessions relevant to the user's message.
+ * Query pgvector for sessions relevant to the user's message.
  * Over-fetches 2x candidates, then re-ranks with a combined score:
  *   0.7 * semantic similarity + 0.3 * recency (30-day half-life)
  *
@@ -101,31 +132,44 @@ export async function retrieveRelevantSessions(
   query: string,
   topK: number = 5
 ): Promise<RetrievedSession[]> {
-  const collection = await getCollection()
   const today = new Date().toISOString().split('T')[0]
+  const queryEmbedding = await generateEmbedding(query)
+  const vectorStr = `[${queryEmbedding.join(',')}]`
 
-  const raw = await collection.query({
-    queryTexts: [query],
-    nResults: topK * 2,
-    include: ['documents', 'metadatas', 'distances'],
-  })
+  const raw = await db.execute(sql`
+    SELECT
+      embedding_id,
+      document,
+      date,
+      type,
+      exercises_csv,
+      muscle_groups_csv,
+      1 - (embedding <=> ${vectorStr}::vector) AS similarity
+    FROM coaching_embeddings
+    WHERE embedding IS NOT NULL
+    ORDER BY embedding <=> ${vectorStr}::vector
+    LIMIT ${topK * 2}
+  `)
 
-  if (!raw.documents?.[0]?.length) return []
+  if (!raw.length) return []
 
-  const scored = raw.documents[0].map((doc, i) => {
-    const distance = raw.distances![0][i] ?? 1
-    const semanticScore = 1 - distance // cosine distance -> similarity [0,1]
-    const sessionDate =
-      (raw.metadatas![0][i]?.date as string) || '2026-01-01'
+  const scored = raw.map((row: any) => {
+    const semanticScore = Number(row.similarity) || 0
+    const sessionDate = row.date || '2026-01-01'
     const daysSince = Math.max(0, daysBetween(sessionDate, today))
     const recencyScore = Math.exp(-daysSince / 30)
     const combined = 0.7 * semanticScore + 0.3 * recencyScore
 
     return {
-      id: raw.ids[0][i],
-      document: doc ?? '',
-      snippet: (doc ?? '').slice(0, 800),
-      metadata: raw.metadatas![0][i] ?? {},
+      id: row.embedding_id as string,
+      document: (row.document as string) ?? '',
+      snippet: ((row.document as string) ?? '').slice(0, 800),
+      metadata: {
+        date: row.date,
+        type: row.type,
+        exercises: row.exercises_csv,
+        muscleGroups: row.muscle_groups_csv,
+      },
       score: combined,
     }
   })
@@ -138,9 +182,9 @@ export async function retrieveRelevantSessions(
 // ---------------------------------------------------------------------------
 
 /**
- * Embed a user+AI exchange and store it in ChromaDB.
+ * Embed a user+AI exchange and store it in Postgres with pgvector.
  * Generates a deterministic ID from the date and a content hash so
- * duplicate calls are idempotent (upsert semantics via ChromaDB add).
+ * duplicate calls are idempotent (ON CONFLICT DO NOTHING).
  *
  * Designed to be called fire-and-forget -- callers should `.catch()`.
  */
@@ -152,12 +196,22 @@ export async function embedAndStore(
   const combined = `User: ${userMessage}\n\nCoach: ${aiResponse}`
   const date = (metadata.date as string) || new Date().toISOString().split('T')[0]
   const hash = createHash('sha256').update(combined).digest('hex').slice(0, 8)
-  const id = `live-${date}-msg-${hash}`
+  const embeddingId = `live-${date}-msg-${hash}`
 
-  const collection = await getCollection()
-  await collection.add({
-    ids: [id],
-    documents: [combined],
-    metadatas: [metadata as Record<string, string | number | boolean>],
-  })
+  const embedding = await generateEmbedding(combined)
+  const vectorStr = `[${embedding.join(',')}]`
+
+  await db.execute(sql`
+    INSERT INTO coaching_embeddings (embedding_id, document, embedding, date, type, exercises_csv, muscle_groups_csv)
+    VALUES (
+      ${embeddingId},
+      ${combined},
+      ${vectorStr}::vector,
+      ${date},
+      ${(metadata.type as string) || 'live-session'},
+      ${(metadata.exercises as string) || ''},
+      ${(metadata.muscleGroups as string) || ''}
+    )
+    ON CONFLICT (embedding_id) DO NOTHING
+  `)
 }

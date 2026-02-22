@@ -1,35 +1,25 @@
 import { Hono } from 'hono'
-import { checkChromaHealth, getCollection, COLLECTION_NAME } from '../lib/chroma.js'
+import { sql } from 'drizzle-orm'
+import { db } from '../db/index.js'
 
 const app = new Hono()
 
-// ---------- GET /status -- ChromaDB health and collection info ----------
+// ---------- GET /status -- pgvector health and collection info ----------
 
 app.get('/status', async (c) => {
-  const healthy = await checkChromaHealth()
-
-  if (!healthy) {
-    return c.json({
-      status: 'unavailable',
-      collection: COLLECTION_NAME,
-      count: 0,
-      message: 'ChromaDB is not reachable',
-    })
-  }
-
   try {
-    const collection = await getCollection()
-    const count = await collection.count()
+    const [row] = await db.execute(sql`SELECT COUNT(*) AS count FROM coaching_embeddings`)
+    const count = Number((row as any).count)
 
     return c.json({
       status: 'connected',
-      collection: COLLECTION_NAME,
+      collection: 'coaching_embeddings',
       count,
     })
   } catch (err) {
     return c.json({
       status: 'error',
-      collection: COLLECTION_NAME,
+      collection: 'coaching_embeddings',
       count: 0,
       message: err instanceof Error ? err.message : 'Unknown error',
     })
@@ -39,35 +29,27 @@ app.get('/status', async (c) => {
 // ---------- GET /collection-info -- Detailed collection info for debugging ----------
 
 app.get('/collection-info', async (c) => {
-  const healthy = await checkChromaHealth()
-
-  if (!healthy) {
-    return c.json({
-      status: 'unavailable',
-      message: 'ChromaDB is not reachable',
-    })
-  }
-
   try {
-    const collection = await getCollection()
-    const count = await collection.count()
+    const [countRow] = await db.execute(sql`SELECT COUNT(*) AS count FROM coaching_embeddings`)
+    const count = Number((countRow as any).count)
 
-    // Get a sample of recent chunks by date metadata
-    const sample = await collection.get({
-      limit: 5,
-      include: ['metadatas'],
-    })
+    const sample = await db.execute(sql`
+      SELECT embedding_id, date, type, exercises_csv
+      FROM coaching_embeddings
+      ORDER BY created_at DESC
+      LIMIT 5
+    `)
 
-    const recentChunks = (sample.metadatas || []).map((meta, i) => ({
-      id: sample.ids[i],
-      date: (meta as Record<string, unknown>)?.date || 'unknown',
-      type: (meta as Record<string, unknown>)?.type || 'unknown',
-      exercises: (meta as Record<string, unknown>)?.exercises || '',
+    const recentChunks = sample.map((row: any) => ({
+      id: row.embedding_id,
+      date: row.date || 'unknown',
+      type: row.type || 'unknown',
+      exercises: row.exercises_csv || '',
     }))
 
     return c.json({
       status: 'connected',
-      collection: COLLECTION_NAME,
+      collection: 'coaching_embeddings',
       count,
       recentChunks,
     })

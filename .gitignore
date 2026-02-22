@@ -2,8 +2,3 @@ node_modules/
 .env
 data/
 dist/
-*.db
-*.db-wal
-*.db-shm
-chroma-data/
-chroma/

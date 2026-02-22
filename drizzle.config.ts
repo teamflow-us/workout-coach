@@ -2,10 +2,10 @@ import 'dotenv/config'
 import { defineConfig } from 'drizzle-kit'
 
 export default defineConfig({
-  dialect: 'sqlite',
+  dialect: 'postgresql',
   schema: './src/server/db/schema.ts',
   out: './drizzle',
   dbCredentials: {
-    url: `file:${process.env.DB_PATH || './workout.db'}`,
+    url: process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/workout_coach',
   },
 })

@@ -95,9 +95,9 @@ app.post('/', async (c) => {
   const data = parsed.data
 
   // Use a transaction to insert workout + exercises + sets atomically
-  const result = db.transaction((tx) => {
+  const result = await db.transaction(async (tx) => {
     // Insert workout
-    const insertedWorkout = tx
+    const [insertedWorkout] = await tx
       .insert(workouts)
       .values({
         date: data.date,
@@ -106,11 +106,10 @@ app.post('/', async (c) => {
         feedback: data.feedback ?? null,
       })
       .returning()
-      .get()
 
     // Insert exercises and their sets
     for (const exercise of data.exercises) {
-      const insertedExercise = tx
+      const [insertedExercise] = await tx
         .insert(exercises)
         .values({
           workoutId: insertedWorkout.id,
@@ -119,10 +118,9 @@ app.post('/', async (c) => {
           restSeconds: exercise.restSeconds ?? null,
         })
         .returning()
-        .get()
 
       for (const set of exercise.sets) {
-        tx.insert(sets)
+        await tx.insert(sets)
           .values({
             exerciseId: insertedExercise.id,
             setNumber: set.setNumber,
@@ -131,7 +129,6 @@ app.post('/', async (c) => {
             rpe: set.rpe ?? null,
             notes: set.notes ?? null,
           })
-          .run()
       }
     }
 
@@ -205,10 +202,10 @@ app.post('/:id/log', async (c) => {
     const parsed = logSchema.parse(JSON.parse(response.text!))
 
     // Update the workout's exercises/sets in the database
-    db.transaction((tx) => {
+    await db.transaction(async (tx) => {
       for (let i = 0; i < parsed.exercises.length; i++) {
         const exercise = parsed.exercises[i]
-        const insertedExercise = tx
+        const [insertedExercise] = await tx
           .insert(exercises)
           .values({
             workoutId,
@@ -216,10 +213,9 @@ app.post('/:id/log', async (c) => {
             order: i + 1,
           })
           .returning()
-          .get()
 
         for (const set of exercise.sets) {
-          tx.insert(sets)
+          await tx.insert(sets)
             .values({
               exerciseId: insertedExercise.id,
               setNumber: set.setNumber,
@@ -227,16 +223,14 @@ app.post('/:id/log', async (c) => {
               weight: set.weight,
               rpe: set.rpe ?? null,
             })
-            .run()
         }
       }
 
       // Update workout feedback if parsed
       if (parsed.feedback) {
-        tx.update(workouts)
+        await tx.update(workouts)
           .set({ feedback: parsed.feedback })
           .where(eq(workouts.id, workoutId))
-          .run()
       }
     })
 
@@ -286,11 +280,10 @@ app.patch('/sets/:setId', async (c) => {
     )
   }
 
-  const existing = await db
+  const [existing] = await db
     .select()
     .from(sets)
     .where(eq(sets.id, setId))
-    .get()
 
   if (!existing) {
     return c.json({ error: 'Set not found' }, 404)
@@ -303,7 +296,6 @@ app.patch('/sets/:setId', async (c) => {
       actualWeight: parsed.data.actualWeight,
     })
     .where(eq(sets.id, setId))
-    .run()
 
   return c.json({ ...existing, ...parsed.data })
 })
