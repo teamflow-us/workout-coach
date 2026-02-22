@@ -83,6 +83,7 @@ export default function Chat({ onWorkoutGenerated, saveToMemory }: ChatProps) {
               text={msg.text}
               timestamp={msg.timestamp}
               sources={msg.sources}
+              nutritionLogged={msg.nutritionLogged}
               isStreaming={
                 isStreaming && idx === messages.length - 1 && msg.role === 'model'
               }

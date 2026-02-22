@@ -105,31 +105,46 @@ export default function AddFoodModal({ mealType, onAdd, onClose }: AddFoodModalP
               {!loading && query && results.length === 0 && (
                 <div className="food-results-empty">No results found</div>
               )}
-              {results.map((food: MacroData, i: number) => (
-                <button
-                  key={`${food.source}-${food.sourceId}-${i}`}
-                  className="food-result-item"
-                  onClick={() => handleSelect(food)}
-                  type="button"
-                >
-                  <div className="food-result-name">{food.name}</div>
-                  {food.brand && (
-                    <div className="food-result-brand">{food.brand}</div>
-                  )}
-                  <div className="food-result-macros">
-                    <span className="food-result-cal">{Math.round(food.calories)} cal</span>
-                    <span className="food-result-macro-line">
-                      {Math.round(food.protein)}p &middot; {Math.round(food.carbs)}c &middot; {Math.round(food.fat)}f
+              {results.map((food: MacroData, i: number) => {
+                const hasCal = food.calories > 0
+                const hasDetailedMacros = food.protein > 0 || food.carbs > 0 || food.fat > 0
+                return (
+                  <button
+                    key={`${food.source}-${food.sourceId}-${i}`}
+                    className="food-result-item"
+                    onClick={() => handleSelect(food)}
+                    type="button"
+                  >
+                    <span className="food-result-content">
+                      <span className="food-result-header">
+                        <span className="food-result-info">
+                          <span className="food-result-name">{food.name}</span>
+                          {food.brand && (
+                            <span className="food-result-brand">{food.brand}</span>
+                          )}
+                        </span>
+                        {hasCal && (
+                          <span className="food-result-cal">{Math.round(food.calories)}</span>
+                        )}
+                      </span>
+                      {hasDetailedMacros ? (
+                        <span className="food-result-macros">
+                          <span className="food-result-macro-line">
+                            {Math.round(food.protein)}p &middot; {Math.round(food.carbs)}c &middot; {Math.round(food.fat)}f
+                          </span>
+                          <span className={`food-result-source ${food.source}`}>
+                            {food.source === 'gemini' ? 'Gemini' : food.source === 'usda' ? 'USDA' : 'OFF'}
+                          </span>
+                        </span>
+                      ) : (
+                        <span className={`food-result-source ${food.source}`}>
+                          {food.source === 'gemini' ? 'Gemini' : food.source === 'usda' ? 'USDA' : 'OFF'}
+                        </span>
+                      )}
                     </span>
-                    <span className={`food-result-source ${food.source}`}>
-                      {food.source === 'usda' ? 'USDA' : 'OFF'}
-                    </span>
-                  </div>
-                  {food.servingSize && (
-                    <div className="food-result-serving">{food.servingSize}</div>
-                  )}
-                </button>
-              ))}
+                  </button>
+                )
+              })}
             </div>
           </>
         ) : (

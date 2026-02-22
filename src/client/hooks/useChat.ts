@@ -6,11 +6,21 @@ export interface ChatSource {
   score: number
 }
 
+export interface NutritionLoggedItem {
+  name: string
+  mealType: string
+  calories: number
+  protein: number
+  carbs: number
+  fat: number
+}
+
 export interface ChatMessage {
   role: 'user' | 'model'
   text: string
   timestamp: number
   sources?: ChatSource[]
+  nutritionLogged?: NutritionLoggedItem[]
 }
 
 interface GenerateWorkoutResponse {
@@ -145,6 +155,20 @@ export function useChat() {
             if (data.type === 'sources') {
               // Store sources; they'll be attached to the message on 'done'
               pendingSourcesRef.current = data.sources as ChatSource[]
+            }
+
+            if (data.type === 'nutrition_logged') {
+              // Attach logged nutrition items to the AI message
+              const items = data.items as NutritionLoggedItem[]
+              setMessages((prev) => {
+                const updated = [...prev]
+                const last = updated[updated.length - 1]
+                updated[updated.length - 1] = {
+                  ...last,
+                  nutritionLogged: items,
+                }
+                return updated
+              })
             }
 
             if (data.type === 'done') {

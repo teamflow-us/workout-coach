@@ -1,9 +1,9 @@
 import { Hono } from 'hono'
 import { streamSSE } from 'hono/streaming'
 import { z } from 'zod'
-import { asc } from 'drizzle-orm'
+import { asc, and, eq } from 'drizzle-orm'
 import { db } from '../db/index.js'
-import { messages, workouts, exercises, sets } from '../db/schema.js'
+import { messages, workouts, exercises, sets, foodLog, favoriteFoods } from '../db/schema.js'
 import { ai } from '../lib/gemini.js'
 import {
   buildSystemPrompt,
@@ -11,6 +11,7 @@ import {
 } from '../lib/coaching.js'
 import { validateWorkoutWeights } from '../lib/guardrails.js'
 import { embedAndStore, extractMetadata } from '../lib/rag.js'
+import { extractFoodFromMessage } from '../lib/nutrition.js'
 
 const app = new Hono()
 
@@ -69,6 +70,93 @@ app.post('/send', async (c) => {
           data: JSON.stringify({ type: 'sources', sources }),
           event: 'message',
         })
+      }
+
+      // Extract and log food items from the user's message
+      try {
+        const foodItems = await extractFoodFromMessage(body.message)
+        if (foodItems && foodItems.length > 0) {
+          const today = new Date().toISOString().split('T')[0]
+          const loggedItems: Array<{ name: string; mealType: string; calories: number; protein: number; carbs: number; fat: number }> = []
+
+          for (const item of foodItems) {
+            const sourceId = `gemini-chat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+
+            db.transaction((tx) => {
+              tx.insert(foodLog)
+                .values({
+                  loggedAt: today,
+                  mealType: item.mealType,
+                  foodName: item.name,
+                  brand: null,
+                  servingSize: item.servingSize,
+                  servings: item.servings,
+                  calories: item.calories,
+                  protein: item.protein,
+                  carbs: item.carbs,
+                  fat: item.fat,
+                  fiber: item.fiber,
+                  sugar: item.sugar,
+                  sodium: item.sodium,
+                  source: 'gemini',
+                  sourceId,
+                })
+                .run()
+
+              // Upsert favorite
+              const existing = tx
+                .select()
+                .from(favoriteFoods)
+                .where(
+                  and(
+                    eq(favoriteFoods.source, 'gemini'),
+                    eq(favoriteFoods.foodName, item.name),
+                  )
+                )
+                .get()
+
+              if (existing) {
+                tx.update(favoriteFoods)
+                  .set({ useCount: existing.useCount + 1 })
+                  .where(eq(favoriteFoods.id, existing.id))
+                  .run()
+              } else {
+                tx.insert(favoriteFoods)
+                  .values({
+                    foodName: item.name,
+                    brand: null,
+                    servingSize: item.servingSize,
+                    calories: item.calories,
+                    protein: item.protein,
+                    carbs: item.carbs,
+                    fat: item.fat,
+                    fiber: item.fiber,
+                    sugar: item.sugar,
+                    sodium: item.sodium,
+                    source: 'gemini',
+                    sourceId,
+                  })
+                  .run()
+              }
+            })
+
+            loggedItems.push({
+              name: item.name,
+              mealType: item.mealType,
+              calories: Math.round(item.calories * item.servings),
+              protein: Math.round(item.protein * item.servings),
+              carbs: Math.round(item.carbs * item.servings),
+              fat: Math.round(item.fat * item.servings),
+            })
+          }
+
+          await stream.writeSSE({
+            data: JSON.stringify({ type: 'nutrition_logged', items: loggedItems }),
+            event: 'message',
+          })
+        }
+      } catch (err) {
+        console.warn('Food extraction failed (non-blocking):', err)
       }
 
       // Signal completion with full text

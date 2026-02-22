@@ -4,12 +4,22 @@ interface ChatSource {
   score: number
 }
 
+interface NutritionLoggedItem {
+  name: string
+  mealType: string
+  calories: number
+  protein: number
+  carbs: number
+  fat: number
+}
+
 interface ChatMessageProps {
   role: 'user' | 'model'
   text: string
   timestamp: number
   isStreaming?: boolean
   sources?: ChatSource[]
+  nutritionLogged?: NutritionLoggedItem[]
   animate?: boolean
 }
 
@@ -58,11 +68,32 @@ export default function ChatMessage({
   timestamp,
   isStreaming,
   sources,
+  nutritionLogged,
   animate = true,
 }: ChatMessageProps) {
   return (
     <div className={`chat-message ${role}${animate ? '' : ' no-animate'}`}>
       <div>{formatText(text)}</div>
+      {role === 'model' && nutritionLogged && nutritionLogged.length > 0 && !isStreaming && (
+        <div className="chat-nutrition-logged">
+          <div className="chat-nutrition-logged-header">
+            <svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+            Logged to Nutrition
+          </div>
+          <div className="chat-nutrition-logged-items">
+            {nutritionLogged.map((item, idx) => (
+              <div key={idx} className="chat-nutrition-logged-item">
+                <span className="chat-nutrition-item-name">{item.name}</span>
+                <span className="chat-nutrition-item-macros">
+                  {item.calories}cal &middot; {item.protein}p &middot; {item.carbs}c &middot; {item.fat}f
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       {role === 'model' && sources && sources.length > 0 && !isStreaming && (
         <details className="chat-sources">
           <summary className="chat-sources-summary">

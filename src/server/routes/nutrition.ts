@@ -26,7 +26,7 @@ const addLogSchema = z.object({
   fiber: z.number().default(0),
   sugar: z.number().default(0),
   sodium: z.number().default(0),
-  source: z.enum(['usda', 'openfoodfacts']),
+  source: z.enum(['usda', 'openfoodfacts', 'gemini']),
   sourceId: z.string().min(1),
 })
 

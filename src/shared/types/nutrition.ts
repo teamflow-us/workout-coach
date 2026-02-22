@@ -12,7 +12,7 @@ export interface MacroData {
   fiber: number
   sugar: number
   sodium: number
-  source: 'usda' | 'openfoodfacts'
+  source: 'usda' | 'openfoodfacts' | 'gemini'
   sourceId: string
 }
 
@@ -31,7 +31,7 @@ export interface FoodLogEntry {
   fiber: number
   sugar: number
   sodium: number
-  source: 'usda' | 'openfoodfacts'
+  source: 'usda' | 'openfoodfacts' | 'gemini'
   sourceId: string
 }
 
