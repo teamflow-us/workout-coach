@@ -252,4 +252,59 @@ app.post('/:id/log', async (c) => {
   }
 })
 
+// ---------- Update Actual Set Values ----------
+
+const updateSetActualsSchema = z.object({
+  actualReps: z.number().int().positive().nullable(),
+  actualWeight: z.number().nullable(),
+})
+
+/**
+ * PATCH /sets/:setId - Update actual reps/weight for a set
+ * Null values mean the user followed the prescribed plan
+ */
+app.patch('/sets/:setId', async (c) => {
+  const setId = Number(c.req.param('setId'))
+
+  if (isNaN(setId)) {
+    return c.json({ error: 'Invalid set ID' }, 400)
+  }
+
+  let body: unknown
+  try {
+    body = await c.req.json()
+  } catch {
+    return c.json({ error: 'Invalid JSON body' }, 400)
+  }
+
+  const parsed = updateSetActualsSchema.safeParse(body)
+  if (!parsed.success) {
+    return c.json(
+      { error: 'Validation failed', details: parsed.error.format() },
+      400
+    )
+  }
+
+  const existing = await db
+    .select()
+    .from(sets)
+    .where(eq(sets.id, setId))
+    .get()
+
+  if (!existing) {
+    return c.json({ error: 'Set not found' }, 404)
+  }
+
+  await db
+    .update(sets)
+    .set({
+      actualReps: parsed.data.actualReps,
+      actualWeight: parsed.data.actualWeight,
+    })
+    .where(eq(sets.id, setId))
+    .run()
+
+  return c.json({ ...existing, ...parsed.data })
+})
+
 export default app

@@ -32,6 +32,8 @@ export const sets = sqliteTable('sets', {
   weight: real('weight'),
   rpe: real('rpe'),
   notes: text('notes'),
+  actualReps: integer('actual_reps'),   // what the user actually did; null = followed plan
+  actualWeight: real('actual_weight'),  // what the user actually used; null = followed plan
 })
 
 export const messages = sqliteTable('messages', {
