@@ -486,6 +486,74 @@ body::before {
   color: #8d8376;
 }
 
+/* ---------- Voice Input ---------- */
+
+.btn-voice {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap-target);
+  min-width: var(--tap-target);
+  padding: var(--spacing-sm);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.btn-voice:hover:not(:disabled) {
+  color: var(--color-text);
+  border-color: var(--color-accent);
+}
+
+.btn-voice.recording {
+  background: var(--color-danger);
+  color: white;
+  border-color: transparent;
+  animation: voice-pulse 1.4s ease-in-out infinite;
+}
+
+.btn-voice.transcribing {
+  background: var(--color-surface-elevated);
+  color: var(--color-text-muted);
+  border-color: var(--line-soft);
+  cursor: wait;
+}
+
+.voice-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--line-soft);
+  border-top-color: var(--color-accent-cool);
+  border-radius: 50%;
+  animation: voice-spin 0.7s linear infinite;
+}
+
+@keyframes voice-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(202, 62, 47, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(202, 62, 47, 0); }
+}
+
+@keyframes voice-spin {
+  to { transform: rotate(360deg); }
+}
+
+.voice-error {
+  font-size: var(--font-size-sm);
+  color: var(--color-danger);
+  background: color-mix(in srgb, var(--color-danger) 10%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--color-danger) 30%, transparent);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  cursor: pointer;
+  font-family: 'Chivo Mono', monospace;
+  font-size: 12px;
+  text-align: center;
+}
+
 button,
 .tap-target {
   min-height: var(--tap-target);
