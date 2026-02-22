@@ -2,7 +2,8 @@ import { readFileSync, existsSync } from 'fs'
 import { getCollection } from './chroma.js'
 
 const SEED_PATH = './chroma-seed.json'
-const BATCH_SIZE = 20
+const BATCH_SIZE = 10
+const BATCH_DELAY_MS = 2000
 
 interface SeedRecord {
   embedding_id: string
@@ -31,19 +32,27 @@ export async function seedChromaIfEmpty(): Promise<number> {
 
   for (let i = 0; i < valid.length; i += BATCH_SIZE) {
     const batch = valid.slice(i, i + BATCH_SIZE)
-    await collection.add({
-      ids: batch.map((r) => r.embedding_id),
-      documents: batch.map((r) => r.document!),
-      metadatas: batch.map((r) => {
-        const meta: Record<string, string> = {}
-        if (r.date) meta.date = r.date
-        if (r.type) meta.type = r.type
-        if (r.exercises) meta.exercises = r.exercises
-        if (r.muscle_groups) meta.muscleGroups = r.muscle_groups
-        return meta
-      }),
-    })
-    console.log(`ChromaDB: seeded ${Math.min(i + BATCH_SIZE, valid.length)}/${valid.length}`)
+    try {
+      await collection.add({
+        ids: batch.map((r) => r.embedding_id),
+        documents: batch.map((r) => r.document!),
+        metadatas: batch.map((r) => {
+          const meta: Record<string, string> = {}
+          if (r.date) meta.date = r.date
+          if (r.type) meta.type = r.type
+          if (r.exercises) meta.exercises = r.exercises
+          if (r.muscle_groups) meta.muscleGroups = r.muscle_groups
+          return meta
+        }),
+      })
+      console.log(`ChromaDB: seeded ${Math.min(i + BATCH_SIZE, valid.length)}/${valid.length}`)
+    } catch (err) {
+      console.error(`ChromaDB: seed batch failed at ${i}:`, err instanceof Error ? err.message : err)
+      throw err
+    }
+    if (i + BATCH_SIZE < valid.length) {
+      await new Promise((r) => setTimeout(r, BATCH_DELAY_MS))
+    }
   }
 
   console.log('ChromaDB: seed complete.')

@@ -48,6 +48,7 @@ serve({ fetch: app.fetch, port }, async () => {
     }
   } catch (err) {
     console.log('ChromaDB: unavailable -- RAG disabled, using profile-only mode')
+    console.error('ChromaDB error:', err instanceof Error ? err.message : err)
   }
 })
 
