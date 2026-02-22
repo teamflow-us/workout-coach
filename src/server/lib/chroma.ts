@@ -52,15 +52,22 @@ export async function getCollection() {
 
 /**
  * Health check for ChromaDB connectivity.
- * Used by server startup for graceful degradation when ChromaDB is down.
+ * Retries on failure to handle startup race when both containers launch together.
  */
-export async function checkChromaHealth(): Promise<boolean> {
-  try {
-    const resp = await fetch(
-      `http://${CHROMA_HOST}:${CHROMA_PORT}/api/v1/heartbeat`
-    )
-    return resp.ok
-  } catch {
-    return false
+export async function checkChromaHealth(retries = 5, delayMs = 3000): Promise<boolean> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const resp = await fetch(
+        `http://${CHROMA_HOST}:${CHROMA_PORT}/api/v1/heartbeat`
+      )
+      if (resp.ok) return true
+    } catch {
+      // ChromaDB not ready yet
+    }
+    if (i < retries - 1) {
+      console.log(`ChromaDB: waiting... (attempt ${i + 1}/${retries})`)
+      await new Promise((r) => setTimeout(r, delayMs))
+    }
   }
+  return false
 }
