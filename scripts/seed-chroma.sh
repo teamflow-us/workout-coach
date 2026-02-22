@@ -2,7 +2,7 @@
 # Copy seed data into the ChromaDB volume on first boot only.
 # If chroma.sqlite3 already exists, the volume has been initialized.
 
-DATA_DIR="/chroma/chroma"
+DATA_DIR="/data"
 
 if [ ! -f "$DATA_DIR/chroma.sqlite3" ]; then
   echo "ChromaDB: seeding from bundled data..."
