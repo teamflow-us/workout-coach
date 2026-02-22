@@ -9,7 +9,7 @@ import chatRoutes from './routes/chat.js'
 import profileRoutes from './routes/profile.js'
 import ragRoutes from './routes/rag.js'
 import { checkChromaHealth, getCollection } from './lib/chroma.js'
-import { seedChromaIfEmpty } from './lib/seed-chroma.js'
+import { seedChroma } from './lib/seed-chroma.js'
 
 const app = new Hono()
 
@@ -39,7 +39,7 @@ serve({ fetch: app.fetch, port }, async () => {
   try {
     const healthy = await checkChromaHealth()
     if (healthy) {
-      const count = await seedChromaIfEmpty()
+      const count = await seedChroma()
       const collection = await getCollection()
       const total = count || await collection.count()
       console.log(`ChromaDB: connected (${total} chunks)`)
