@@ -77,6 +77,22 @@ export default function WorkoutView({ workoutId, onStartRest }: WorkoutViewProps
     loadWorkout(workoutId)
   }, [workoutId, loadWorkout])
 
+  // Auto-advance to the next exercise when all sets in the current one are completed
+  useEffect(() => {
+    if (!workout) return
+    const sorted = [...workout.exercises].sort((a, b) => a.order - b.order)
+    const currentExercise = sorted[activeExerciseIndex]
+    if (!currentExercise || currentExercise.sets.length === 0) return
+
+    const allSetsComplete = currentExercise.sets.every(set =>
+      completedSets.has(`${currentExercise.id}-${set.setNumber}`)
+    )
+
+    if (allSetsComplete && activeExerciseIndex < sorted.length - 1) {
+      setActiveExerciseIndex(activeExerciseIndex + 1)
+    }
+  }, [completedSets, activeExerciseIndex, workout])
+
   const handleSetComplete = useCallback((exerciseId: number, setNumber: number) => {
     const key = `${exerciseId}-${setNumber}`
     setCompletedSets(prev => {
