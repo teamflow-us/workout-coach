@@ -10,6 +10,7 @@ interface ChatMessageProps {
   timestamp: number
   isStreaming?: boolean
   sources?: ChatSource[]
+  animate?: boolean
 }
 
 /**
@@ -57,9 +58,10 @@ export default function ChatMessage({
   timestamp,
   isStreaming,
   sources,
+  animate = true,
 }: ChatMessageProps) {
   return (
-    <div className={`chat-message ${role}`}>
+    <div className={`chat-message ${role}${animate ? '' : ' no-animate'}`}>
       <div>{formatText(text)}</div>
       {role === 'model' && sources && sources.length > 0 && !isStreaming && (
         <details className="chat-sources">

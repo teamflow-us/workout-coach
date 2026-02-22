@@ -284,6 +284,10 @@ body::before {
   animation: lift-in 340ms ease both;
 }
 
+.chat-message.no-animate {
+  animation: none;
+}
+
 .chat-message.user {
   align-self: flex-end;
   background: linear-gradient(140deg, var(--color-accent) 0%, var(--chat-user-end) 100%);

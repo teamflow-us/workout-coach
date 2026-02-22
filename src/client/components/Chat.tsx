@@ -8,15 +8,25 @@ interface ChatProps {
 }
 
 export default function Chat({ onWorkoutGenerated, saveToMemory }: ChatProps) {
-  const { messages, sendMessage, generateWorkout, isStreaming } = useChat()
+  const { messages, sendMessage, generateWorkout, isStreaming, historyLoaded } = useChat()
   const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const hasScrolledToHistory = useRef(false)
 
-  // Auto-scroll to bottom on new messages
+  // Auto-scroll to bottom: instant on initial history load, smooth for new messages
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+    if (!historyLoaded) return
+
+    if (!hasScrolledToHistory.current) {
+      if (messages.length > 0) {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'instant' })
+      }
+      hasScrolledToHistory.current = true
+    } else if (messages.length > 0) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [messages, historyLoaded])
 
   const handleSend = () => {
     if (!input.trim() || isStreaming) return
@@ -59,6 +69,7 @@ export default function Chat({ onWorkoutGenerated, saveToMemory }: ChatProps) {
               isStreaming={
                 isStreaming && idx === messages.length - 1 && msg.role === 'model'
               }
+              animate={hasScrolledToHistory.current}
             />
           ))
         )}
