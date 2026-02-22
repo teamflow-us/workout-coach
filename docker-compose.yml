@@ -5,8 +5,12 @@ services:
       dockerfile: Dockerfile
     container_name: workout-coach
     restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
     environment:
       - GEMINI_API_KEY=${GEMINI_API_KEY:?GEMINI_API_KEY is required}
+      - DEEPGRAM_API_KEY=${DEEPGRAM_API_KEY:-}
+      - USDA_API_KEY=${USDA_API_KEY:-}
       - PORT=3000
       - DB_PATH=/data/workout.db
       - AUTH_USERNAME=${AUTH_USERNAME:-}

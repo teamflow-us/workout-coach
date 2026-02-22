@@ -2,7 +2,7 @@ import { ChromaClient, type EmbeddingFunction } from 'chromadb'
 import { ai } from './gemini.js'
 
 const CHROMA_HOST = process.env.CHROMA_HOST || 'localhost'
-const CHROMA_PORT = parseInt(process.env.CHROMA_PORT || '8100', 10)
+const CHROMA_PORT = parseInt(process.env.CHROMA_PORT || '8000', 10)
 export const COLLECTION_NAME = 'coaching-history'
 const EMBEDDING_MODEL = 'gemini-embedding-001'
 const EMBEDDING_DIMENSIONS = 768

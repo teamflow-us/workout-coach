@@ -3,8 +3,6 @@ import { eq, desc } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '../db/index.js'
 import { workouts, exercises, sets } from '../db/schema.js'
-import { ai } from '../lib/gemini.js'
-
 const app = new Hono()
 
 // ---------- Validation Schemas ----------
@@ -20,6 +18,7 @@ const createSetSchema = z.object({
 const createExerciseSchema = z.object({
   name: z.string().min(1),
   order: z.number().int().positive(),
+  restSeconds: z.number().int().nonnegative().nullable().optional(),
   sets: z.array(createSetSchema).optional().default([]),
 })
 
@@ -117,6 +116,7 @@ app.post('/', async (c) => {
           workoutId: insertedWorkout.id,
           name: exercise.name,
           order: exercise.order,
+          restSeconds: exercise.restSeconds ?? null,
         })
         .returning()
         .get()
@@ -192,6 +192,7 @@ app.post('/:id/log', async (c) => {
   }
 
   try {
+    const { ai } = await import('../lib/gemini.js')
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: `Parse this workout log into structured data. The user said: "${body.text}"`,
@@ -205,14 +206,14 @@ app.post('/:id/log', async (c) => {
 
     // Update the workout's exercises/sets in the database
     db.transaction((tx) => {
-      for (const exercise of parsed.exercises) {
-        // Insert or update exercise
+      for (let i = 0; i < parsed.exercises.length; i++) {
+        const exercise = parsed.exercises[i]
         const insertedExercise = tx
           .insert(exercises)
           .values({
             workoutId,
             name: exercise.name,
-            order: 1, // will be adjusted if needed
+            order: i + 1,
           })
           .returning()
           .get()

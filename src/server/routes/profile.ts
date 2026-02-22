@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { eq, sql } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { db } from '../db/index.js'
 import { coachingProfiles } from '../db/schema.js'
 
