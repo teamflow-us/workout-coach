@@ -1,4 +1,10 @@
 import { useState, useEffect } from 'react'
+import { apiFetch } from '../lib/apiFetch'
+
+interface ProfileEditorProps {
+  onSignOut?: () => void
+  userEmail?: string | null
+}
 
 interface CoachingProfile {
   id: number | null
@@ -38,7 +44,7 @@ const DEFAULT_EQUIPMENT = [
 
 const DEFAULT_MAX_LIFTS = ['Floor Press', 'Overhead Press', 'Glute Bridge']
 
-export default function ProfileEditor() {
+export default function ProfileEditor({ onSignOut, userEmail }: ProfileEditorProps) {
   const [profile, setProfile] = useState<CoachingProfile>({
     id: null,
     biometrics: {},
@@ -65,7 +71,7 @@ export default function ProfileEditor() {
 
   const loadProfile = async () => {
     try {
-      const res = await fetch('/api/profile')
+      const res = await apiFetch('/api/profile')
       if (!res.ok) throw new Error('Failed to load profile')
       const data = await res.json()
       setProfile({
@@ -88,7 +94,7 @@ export default function ProfileEditor() {
     setSaving(true)
     setSaved(false)
     try {
-      const res = await fetch('/api/profile', {
+      const res = await apiFetch('/api/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -653,6 +659,23 @@ export default function ProfileEditor() {
       >
         {saving ? 'Saving...' : saved ? 'Saved!' : 'Save Profile'}
       </button>
+
+      {/* Account Section */}
+      {onSignOut && (
+        <section className="profile-account">
+          <h3 className="profile-section-title">Account</h3>
+          {userEmail && (
+            <p className="profile-account-email">{userEmail}</p>
+          )}
+          <button
+            type="button"
+            className="profile-signout-btn tap-target"
+            onClick={onSignOut}
+          >
+            Sign Out
+          </button>
+        </section>
+      )}
     </div>
   )
 }

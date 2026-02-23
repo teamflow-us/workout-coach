@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
+import { apiFetch } from '../lib/apiFetch'
 
 export type VoiceState = 'idle' | 'recording' | 'transcribing'
 
@@ -22,7 +23,7 @@ export function useVoiceInput(onTranscript: (text: string) => void) {
       setError(null)
 
       try {
-        const res = await fetch('/api/voice/transcribe', {
+        const res = await apiFetch('/api/voice/transcribe', {
           method: 'POST',
           body: audioBlob,
           headers: {

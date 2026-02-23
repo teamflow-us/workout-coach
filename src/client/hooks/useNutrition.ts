@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import type { FoodLogEntry, NutritionGoals, DailyTotals, MealType, MacroData } from '../../shared/types/nutrition.js'
+import { apiFetch } from '../lib/apiFetch'
 
 const DEFAULT_GOALS: NutritionGoals = {
   caloriesTarget: 2000,
@@ -35,9 +36,9 @@ export function useNutrition(date: string) {
   const fetchData = useCallback(async () => {
     try {
       const [logRes, totalsRes, goalsRes] = await Promise.all([
-        fetch(`/api/nutrition/log?date=${date}`),
-        fetch(`/api/nutrition/totals?date=${date}`),
-        fetch('/api/nutrition/goals'),
+        apiFetch(`/api/nutrition/log?date=${date}`),
+        apiFetch(`/api/nutrition/totals?date=${date}`),
+        apiFetch('/api/nutrition/goals'),
       ])
 
       if (logRes.ok) {
@@ -85,7 +86,7 @@ export function useNutrition(date: string) {
 
   const addEntry = useCallback(async (mealType: MealType, food: MacroData, servings: number) => {
     try {
-      const res = await fetch('/api/nutrition/log', {
+      const res = await apiFetch('/api/nutrition/log', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -140,7 +141,7 @@ export function useNutrition(date: string) {
     setEntries((prev) => [tempEntry, ...prev])
 
     try {
-      const res = await fetch('/api/nutrition/quick-add', {
+      const res = await apiFetch('/api/nutrition/quick-add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ foodName, mealType, loggedAt: date }),
@@ -162,7 +163,7 @@ export function useNutrition(date: string) {
 
   const deleteEntry = useCallback(async (id: number) => {
     try {
-      const res = await fetch(`/api/nutrition/log/${id}`, { method: 'DELETE' })
+      const res = await apiFetch(`/api/nutrition/log/${id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error(`Failed: ${res.status}`)
       await fetchData()
     } catch (err) {

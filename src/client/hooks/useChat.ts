@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { apiFetch } from '../lib/apiFetch'
 
 export interface ChatSource {
   date: string
@@ -60,7 +61,7 @@ export function useChat() {
 
   const loadHistory = async () => {
     try {
-      const res = await fetch('/api/chat/history')
+      const res = await apiFetch('/api/chat/history')
       if (!res.ok) return
 
       const dbMessages: Array<{
@@ -117,7 +118,7 @@ export function useChat() {
     abortRef.current = new AbortController()
 
     try {
-      const res = await fetch('/api/chat/send', {
+      const res = await apiFetch('/api/chat/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: text, saveToMemory: saveToMemory ?? true }),
@@ -244,7 +245,7 @@ export function useChat() {
         setMessages((prev) => [...prev, userMsg])
         setIsStreaming(true)
 
-        const res = await fetch('/api/chat/generate-workout', {
+        const res = await apiFetch('/api/chat/generate-workout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ prompt, saveToMemory: saveToMemory ?? true }),

@@ -70,6 +70,43 @@ app.post('/api/auth/token/refresh', async (c) => {
   return c.json(data, resp.status as any)
 })
 
+app.post('/api/auth/recover', async (c) => {
+  const body = await c.req.json()
+  const resp = await fetch(`${GOTRUE_URL}/recover`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  const data = await resp.json()
+  return c.json(data, resp.status as any)
+})
+
+app.put('/api/auth/user', async (c) => {
+  const auth = c.req.header('Authorization') || ''
+  const body = await c.req.json()
+  const resp = await fetch(`${GOTRUE_URL}/user`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': auth,
+    },
+    body: JSON.stringify(body),
+  })
+  const data = await resp.json()
+  return c.json(data, resp.status as any)
+})
+
+app.post('/api/auth/logout', async (c) => {
+  const auth = c.req.header('Authorization') || ''
+  const resp = await fetch(`${GOTRUE_URL}/logout`, {
+    method: 'POST',
+    headers: { 'Authorization': auth },
+  })
+  if (resp.status === 204) return c.body(null, 204)
+  const data = await resp.json()
+  return c.json(data, resp.status as any)
+})
+
 // Mount routes
 app.route('/api/health', healthRoutes)
 app.route('/api/workouts', workoutRoutes)

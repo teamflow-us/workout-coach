@@ -4,7 +4,9 @@ import WorkoutView from './components/WorkoutView'
 import RestTimer from './components/RestTimer'
 import ProfileEditor from './components/ProfileEditor'
 import NutritionPage from './components/NutritionPage'
+import AuthScreen from './components/AuthScreen'
 import { useWakeLock } from './hooks/useWakeLock'
+import { useAuth } from './hooks/useAuth'
 
 type Tab = 'chat' | 'workout' | 'nutrition' | 'profile'
 type ThemeMode = 'atelier' | 'midnight'
@@ -34,6 +36,7 @@ export default function App() {
   const [restTimerSeconds, setRestTimerSeconds] = useState<number | null>(null)
   const [latestWorkoutId, setLatestWorkoutId] = useState<number | null>(null)
   const { request: requestWakeLock, release: releaseWakeLock } = useWakeLock()
+  const auth = useAuth()
 
   useEffect(() => {
     window.localStorage.setItem('ww-theme', theme)
@@ -100,6 +103,25 @@ export default function App() {
     )
   }
 
+  // Auth loading state
+  if (auth.loading) {
+    return (
+      <div className="auth-loading">
+        <div className="auth-loading-spinner" />
+      </div>
+    )
+  }
+
+  // Not authenticated — show auth screen
+  if (!auth.authenticated) {
+    return (
+      <AuthScreen
+        recoveryToken={auth.recoveryToken}
+        onLoginSuccess={auth.onLoginSuccess}
+      />
+    )
+  }
+
   return (
     <div className="app-container" data-theme={theme}>
       {activeTab === 'chat' && (
@@ -136,7 +158,9 @@ export default function App() {
           />
         )}
         {activeTab === 'nutrition' && <NutritionPage />}
-        {activeTab === 'profile' && <ProfileEditor />}
+        {activeTab === 'profile' && (
+          <ProfileEditor onSignOut={auth.signOut} userEmail={auth.userEmail} />
+        )}
       </div>
 
       {/* Rest timer overlay */}

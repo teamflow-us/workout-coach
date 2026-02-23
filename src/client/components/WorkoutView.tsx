@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import ExerciseCard from './ExerciseCard'
+import { apiFetch } from '../lib/apiFetch'
 
 // ---------- Types ----------
 
@@ -49,7 +50,7 @@ export default function WorkoutView({ workoutId, onStartRest }: WorkoutViewProps
 
       if (!targetId) {
         // Fetch most recent workout
-        const listRes = await fetch('/api/workouts')
+        const listRes = await apiFetch('/api/workouts')
         if (!listRes.ok) throw new Error('Failed to fetch workouts')
         const workouts = await listRes.json()
         if (!workouts.length) {
@@ -61,7 +62,7 @@ export default function WorkoutView({ workoutId, onStartRest }: WorkoutViewProps
       }
 
       // Fetch full workout details
-      const res = await fetch(`/api/workouts/${targetId}`)
+      const res = await apiFetch(`/api/workouts/${targetId}`)
       if (!res.ok) throw new Error('Failed to fetch workout')
       const data: Workout = await res.json()
       setWorkout(data)
@@ -132,7 +133,7 @@ export default function WorkoutView({ workoutId, onStartRest }: WorkoutViewProps
   const handleActualsChange = useCallback(
     async (setId: number, actualReps: number | null, actualWeight: number | null) => {
       try {
-        await fetch(`/api/workouts/sets/${setId}`, {
+        await apiFetch(`/api/workouts/sets/${setId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ actualReps, actualWeight }),
