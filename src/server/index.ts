@@ -36,13 +36,23 @@ if (authMiddleware) {
 
 const GOTRUE_URL = process.env.GOTRUE_URL || 'http://supabase-auth:9999'
 
+async function gotrueProxy(url: string, init: RequestInit) {
+  try {
+    return await fetch(url, init)
+  } catch (err) {
+    console.error(`GoTrue proxy error (${url}):`, err instanceof Error ? err.message : err)
+    return null
+  }
+}
+
 app.post('/api/auth/signup', async (c) => {
   const body = await c.req.json()
-  const resp = await fetch(`${GOTRUE_URL}/signup`, {
+  const resp = await gotrueProxy(`${GOTRUE_URL}/signup`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
+  if (!resp) return c.json({ error: 'Auth service unavailable', error_description: `Cannot reach GoTrue at ${GOTRUE_URL}` }, 502)
   const data = await resp.json()
   return c.json(data, resp.status as any)
 })
@@ -50,33 +60,36 @@ app.post('/api/auth/signup', async (c) => {
 app.post('/api/auth/token', async (c) => {
   const body = await c.req.json()
   const grantType = body.grant_type || 'password'
-  const resp = await fetch(`${GOTRUE_URL}/token?grant_type=${grantType}`, {
+  const resp = await gotrueProxy(`${GOTRUE_URL}/token?grant_type=${grantType}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
+  if (!resp) return c.json({ error: 'Auth service unavailable', error_description: `Cannot reach GoTrue at ${GOTRUE_URL}` }, 502)
   const data = await resp.json()
   return c.json(data, resp.status as any)
 })
 
 app.post('/api/auth/token/refresh', async (c) => {
   const body = await c.req.json()
-  const resp = await fetch(`${GOTRUE_URL}/token?grant_type=refresh_token`, {
+  const resp = await gotrueProxy(`${GOTRUE_URL}/token?grant_type=refresh_token`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
+  if (!resp) return c.json({ error: 'Auth service unavailable', error_description: `Cannot reach GoTrue at ${GOTRUE_URL}` }, 502)
   const data = await resp.json()
   return c.json(data, resp.status as any)
 })
 
 app.post('/api/auth/recover', async (c) => {
   const body = await c.req.json()
-  const resp = await fetch(`${GOTRUE_URL}/recover`, {
+  const resp = await gotrueProxy(`${GOTRUE_URL}/recover`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
+  if (!resp) return c.json({ error: 'Auth service unavailable', error_description: `Cannot reach GoTrue at ${GOTRUE_URL}` }, 502)
   const data = await resp.json()
   return c.json(data, resp.status as any)
 })
@@ -84,7 +97,7 @@ app.post('/api/auth/recover', async (c) => {
 app.put('/api/auth/user', async (c) => {
   const auth = c.req.header('Authorization') || ''
   const body = await c.req.json()
-  const resp = await fetch(`${GOTRUE_URL}/user`, {
+  const resp = await gotrueProxy(`${GOTRUE_URL}/user`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -92,16 +105,18 @@ app.put('/api/auth/user', async (c) => {
     },
     body: JSON.stringify(body),
   })
+  if (!resp) return c.json({ error: 'Auth service unavailable', error_description: `Cannot reach GoTrue at ${GOTRUE_URL}` }, 502)
   const data = await resp.json()
   return c.json(data, resp.status as any)
 })
 
 app.post('/api/auth/logout', async (c) => {
   const auth = c.req.header('Authorization') || ''
-  const resp = await fetch(`${GOTRUE_URL}/logout`, {
+  const resp = await gotrueProxy(`${GOTRUE_URL}/logout`, {
     method: 'POST',
     headers: { 'Authorization': auth },
   })
+  if (!resp) return c.json({ error: 'Auth service unavailable', error_description: `Cannot reach GoTrue at ${GOTRUE_URL}` }, 502)
   if (resp.status === 204) return c.body(null, 204)
   const data = await resp.json()
   return c.json(data, resp.status as any)
