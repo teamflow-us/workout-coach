@@ -1,8 +1,9 @@
 import { Hono } from 'hono'
-import { eq, desc } from 'drizzle-orm'
+import { eq, desc, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '../db/index.js'
 import { workouts, exercises, sets } from '../db/schema.js'
+import { getUserId } from '../lib/user.js'
 const app = new Hono()
 
 // ---------- Validation Schemas ----------
@@ -36,9 +37,12 @@ const createWorkoutSchema = z.object({
  * GET / - List all workouts, ordered by date descending
  */
 app.get('/', async (c) => {
+  const userId = getUserId(c)
+
   const allWorkouts = await db
     .select()
     .from(workouts)
+    .where(eq(workouts.userId, userId))
     .orderBy(desc(workouts.date))
 
   return c.json(allWorkouts)
@@ -48,6 +52,7 @@ app.get('/', async (c) => {
  * GET /:id - Get a single workout by ID with nested exercises and sets
  */
 app.get('/:id', async (c) => {
+  const userId = getUserId(c)
   const id = Number(c.req.param('id'))
 
   if (isNaN(id)) {
@@ -55,7 +60,7 @@ app.get('/:id', async (c) => {
   }
 
   const workout = await db.query.workouts.findFirst({
-    where: eq(workouts.id, id),
+    where: and(eq(workouts.id, id), eq(workouts.userId, userId)),
     with: {
       exercises: {
         with: {
@@ -77,6 +82,8 @@ app.get('/:id', async (c) => {
  * Uses a transaction to ensure atomicity
  */
 app.post('/', async (c) => {
+  const userId = getUserId(c)
+
   let body: unknown
   try {
     body = await c.req.json()
@@ -100,6 +107,7 @@ app.post('/', async (c) => {
     const [insertedWorkout] = await tx
       .insert(workouts)
       .values({
+        userId,
         date: data.date,
         programName: data.programName ?? null,
         notes: data.notes ?? null,
@@ -112,6 +120,7 @@ app.post('/', async (c) => {
       const [insertedExercise] = await tx
         .insert(exercises)
         .values({
+          userId,
           workoutId: insertedWorkout.id,
           name: exercise.name,
           order: exercise.order,
@@ -122,6 +131,7 @@ app.post('/', async (c) => {
       for (const set of exercise.sets) {
         await tx.insert(sets)
           .values({
+            userId,
             exerciseId: insertedExercise.id,
             setNumber: set.setNumber,
             reps: set.reps ?? null,
@@ -162,15 +172,16 @@ const logSchema = z.object({
  * Parses natural language workout log into structured data using Gemini
  */
 app.post('/:id/log', async (c) => {
+  const userId = getUserId(c)
   const workoutId = Number(c.req.param('id'))
 
   if (isNaN(workoutId)) {
     return c.json({ error: 'Invalid workout ID' }, 400)
   }
 
-  // Verify workout exists
+  // Verify workout exists and belongs to this user
   const workout = await db.query.workouts.findFirst({
-    where: eq(workouts.id, workoutId),
+    where: and(eq(workouts.id, workoutId), eq(workouts.userId, userId)),
   })
 
   if (!workout) {
@@ -208,6 +219,7 @@ app.post('/:id/log', async (c) => {
         const [insertedExercise] = await tx
           .insert(exercises)
           .values({
+            userId,
             workoutId,
             name: exercise.name,
             order: i + 1,
@@ -217,6 +229,7 @@ app.post('/:id/log', async (c) => {
         for (const set of exercise.sets) {
           await tx.insert(sets)
             .values({
+              userId,
               exerciseId: insertedExercise.id,
               setNumber: set.setNumber,
               reps: set.reps,
@@ -230,7 +243,7 @@ app.post('/:id/log', async (c) => {
       if (parsed.feedback) {
         await tx.update(workouts)
           .set({ feedback: parsed.feedback })
-          .where(eq(workouts.id, workoutId))
+          .where(and(eq(workouts.id, workoutId), eq(workouts.userId, userId)))
       }
     })
 
@@ -259,6 +272,7 @@ const updateSetActualsSchema = z.object({
  * Null values mean the user followed the prescribed plan
  */
 app.patch('/sets/:setId', async (c) => {
+  const userId = getUserId(c)
   const setId = Number(c.req.param('setId'))
 
   if (isNaN(setId)) {
@@ -283,7 +297,7 @@ app.patch('/sets/:setId', async (c) => {
   const [existing] = await db
     .select()
     .from(sets)
-    .where(eq(sets.id, setId))
+    .where(and(eq(sets.id, setId), eq(sets.userId, userId)))
 
   if (!existing) {
     return c.json({ error: 'Set not found' }, 404)
@@ -295,7 +309,7 @@ app.patch('/sets/:setId', async (c) => {
       actualReps: parsed.data.actualReps,
       actualWeight: parsed.data.actualWeight,
     })
-    .where(eq(sets.id, setId))
+    .where(and(eq(sets.id, setId), eq(sets.userId, userId)))
 
   return c.json({ ...existing, ...parsed.data })
 })

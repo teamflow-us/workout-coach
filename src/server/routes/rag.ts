@@ -1,14 +1,16 @@
 import { Hono } from 'hono'
 import { sql } from 'drizzle-orm'
 import { db } from '../db/index.js'
+import { getUserId } from '../lib/user.js'
 
 const app = new Hono()
 
 // ---------- GET /status -- pgvector health and collection info ----------
 
 app.get('/status', async (c) => {
+  const userId = getUserId(c)
   try {
-    const [row] = await db.execute(sql`SELECT COUNT(*) AS count FROM coaching_embeddings`)
+    const [row] = await db.execute(sql`SELECT COUNT(*) AS count FROM coaching_embeddings WHERE user_id = ${userId}`)
     const count = Number((row as any).count)
 
     return c.json({
@@ -29,13 +31,15 @@ app.get('/status', async (c) => {
 // ---------- GET /collection-info -- Detailed collection info for debugging ----------
 
 app.get('/collection-info', async (c) => {
+  const userId = getUserId(c)
   try {
-    const [countRow] = await db.execute(sql`SELECT COUNT(*) AS count FROM coaching_embeddings`)
+    const [countRow] = await db.execute(sql`SELECT COUNT(*) AS count FROM coaching_embeddings WHERE user_id = ${userId}`)
     const count = Number((countRow as any).count)
 
     const sample = await db.execute(sql`
       SELECT embedding_id, date, type, exercises_csv
       FROM coaching_embeddings
+      WHERE user_id = ${userId}
       ORDER BY created_at DESC
       LIMIT 5
     `)

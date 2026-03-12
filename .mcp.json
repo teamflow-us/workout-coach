@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "supabase": {
+      "type": "http",
+      "url": "https://data.gyminitraining.com/mcp"
+    },
+    "postgres": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "--network=workout-coach-network",
+        "-e",
+        "DATABASE_URI",
+        "crystaldba/postgres-mcp",
+        "--access-mode=unrestricted"
+      ],
+      "env": {
+        "DATABASE_URI": "postgres://postgres:Pgmk7vXq2LnTz9rWb4Hs8KcN5Yp3Md6Q@workout-supabase-db:5432/postgres"
+      }
+    }
+  }
+}

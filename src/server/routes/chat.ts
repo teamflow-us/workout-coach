@@ -3,7 +3,7 @@ import { streamSSE } from 'hono/streaming'
 import { z } from 'zod'
 import { asc, and, eq } from 'drizzle-orm'
 import { db } from '../db/index.js'
-import { messages, workouts, exercises, sets, foodLog, favoriteFoods } from '../db/schema.js'
+import { messages, workouts, exercises, sets, foodLog, favoriteFoods, coachingProfiles } from '../db/schema.js'
 import { ai } from '../lib/gemini.js'
 import {
   buildSystemPrompt,
@@ -12,12 +12,15 @@ import {
 import { validateWorkoutWeights } from '../lib/guardrails.js'
 import { embedAndStore, extractMetadata } from '../lib/rag.js'
 import { extractFoodFromMessage } from '../lib/nutrition.js'
+import { getUserId } from '../lib/user.js'
 
 const app = new Hono()
 
 // ---------- POST /send -- Streaming chat via SSE ----------
 
 app.post('/send', async (c) => {
+  const userId = getUserId(c)
+
   let body: { message: string; saveToMemory?: boolean }
   try {
     body = await c.req.json()
@@ -33,10 +36,11 @@ app.post('/send', async (c) => {
   const dbMessages = await db
     .select()
     .from(messages)
+    .where(eq(messages.userId, userId))
     .orderBy(asc(messages.createdAt))
 
   const history = messagesToHistory(dbMessages)
-  const { prompt: systemPrompt, sources } = await buildSystemPrompt(body.message)
+  const { prompt: systemPrompt, sources } = await buildSystemPrompt(body.message, userId)
 
   return streamSSE(c, async (stream) => {
     try {
@@ -86,6 +90,7 @@ app.post('/send', async (c) => {
             await db.transaction(async (tx) => {
               await tx.insert(foodLog)
                 .values({
+                  userId,
                   loggedAt: today,
                   mealType: item.mealType,
                   foodName: item.name,
@@ -109,6 +114,7 @@ app.post('/send', async (c) => {
                 .from(favoriteFoods)
                 .where(
                   and(
+                    eq(favoriteFoods.userId, userId),
                     eq(favoriteFoods.source, 'gemini'),
                     eq(favoriteFoods.foodName, item.name),
                   )
@@ -121,6 +127,7 @@ app.post('/send', async (c) => {
               } else {
                 await tx.insert(favoriteFoods)
                   .values({
+                    userId,
                     foodName: item.name,
                     brand: null,
                     servingSize: item.servingSize,
@@ -164,8 +171,8 @@ app.post('/send', async (c) => {
 
       // Persist both user message and AI response to DB
       await db.insert(messages).values([
-        { role: 'user', content: body.message },
-        { role: 'model', content: fullText, nutritionLogged: loggedItems ? JSON.stringify(loggedItems) : null },
+        { userId, role: 'user', content: body.message },
+        { userId, role: 'model', content: fullText, nutritionLogged: loggedItems ? JSON.stringify(loggedItems) : null },
       ])
 
       // Fire-and-forget write-back: embed the exchange in ChromaDB
@@ -177,7 +184,7 @@ app.post('/send', async (c) => {
           exercises: meta.exercises.join(','),
           muscleGroups: meta.muscleGroups.join(','),
           type: 'live-session',
-        }).catch((err) => console.warn('RAG write-back failed:', err))
+        }, userId).catch((err) => console.warn('RAG write-back failed:', err))
       }
     } catch (err) {
       console.error('Chat streaming error:', err)
@@ -217,6 +224,8 @@ const workoutPlanSchema = z.object({
 })
 
 app.post('/generate-workout', async (c) => {
+  const userId = getUserId(c)
+
   let body: { prompt: string; saveToMemory?: boolean }
   try {
     body = await c.req.json()
@@ -229,7 +238,7 @@ app.post('/generate-workout', async (c) => {
   }
 
   try {
-    const { prompt: systemPrompt, sources } = await buildSystemPrompt(body.prompt)
+    const { prompt: systemPrompt, sources } = await buildSystemPrompt(body.prompt, userId)
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
@@ -244,7 +253,9 @@ app.post('/generate-workout', async (c) => {
     const plan = workoutPlanSchema.parse(JSON.parse(response.text!))
 
     // Load coaching profile for weight validation
-    const profile = await db.query.coachingProfiles.findFirst()
+    const profile = await db.query.coachingProfiles.findFirst({
+      where: eq(coachingProfiles.userId, userId),
+    })
     const maxes = profile ? JSON.parse(profile.maxes) : {}
     const warnings = validateWorkoutWeights(
       plan.exercises.map((ex) => ({ name: ex.name, weight: ex.weight })),
@@ -257,6 +268,7 @@ app.post('/generate-workout', async (c) => {
       const [insertedWorkout] = await tx
         .insert(workouts)
         .values({
+          userId,
           date: today,
           programName: plan.programName,
           notes: plan.notes ?? null,
@@ -268,6 +280,7 @@ app.post('/generate-workout', async (c) => {
         const [insertedExercise] = await tx
           .insert(exercises)
           .values({
+            userId,
             workoutId: insertedWorkout.id,
             name: exercise.name,
             order: i + 1,
@@ -279,6 +292,7 @@ app.post('/generate-workout', async (c) => {
         for (let s = 1; s <= exercise.sets; s++) {
           await tx.insert(sets)
             .values({
+              userId,
               exerciseId: insertedExercise.id,
               setNumber: s,
               reps: exercise.reps,
@@ -300,8 +314,9 @@ app.post('/generate-workout', async (c) => {
       .join('\n')
     const aiSummary = `Generated workout: ${plan.programName}\n${exerciseDetails}`
     await db.insert(messages).values([
-      { role: 'user', content: body.prompt },
+      { userId, role: 'user', content: body.prompt },
       {
+        userId,
         role: 'model',
         content: aiSummary,
         workoutId: savedWorkout.id,
@@ -317,7 +332,7 @@ app.post('/generate-workout', async (c) => {
         exercises: meta.exercises.join(','),
         muscleGroups: meta.muscleGroups.join(','),
         type: 'live-session',
-      }).catch((err) => console.warn('RAG write-back failed:', err))
+      }, userId).catch((err) => console.warn('RAG write-back failed:', err))
     }
 
     return c.json({
@@ -341,9 +356,12 @@ app.post('/generate-workout', async (c) => {
 // ---------- GET /history -- Load chat history ----------
 
 app.get('/history', async (c) => {
+  const userId = getUserId(c)
+
   const allMessages = await db
     .select()
     .from(messages)
+    .where(eq(messages.userId, userId))
     .orderBy(asc(messages.createdAt))
 
   return c.json(allMessages)

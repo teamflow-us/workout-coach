@@ -65,8 +65,9 @@ export async function seedEmbeddings(): Promise<number> {
           const r = batch[j]
           const vectorStr = `[${embeddings[j].join(',')}]`
           await db.execute(sql`
-            INSERT INTO coaching_embeddings (embedding_id, document, embedding, date, type, exercises_csv, muscle_groups_csv)
+            INSERT INTO coaching_embeddings (user_id, embedding_id, document, embedding, date, type, exercises_csv, muscle_groups_csv)
             VALUES (
+              'dev-user-00000000-0000-0000-0000-000000000000',
               ${r.embedding_id},
               ${r.document},
               ${vectorStr}::vector,

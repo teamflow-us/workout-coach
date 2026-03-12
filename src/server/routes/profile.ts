@@ -2,13 +2,17 @@ import { Hono } from 'hono'
 import { eq } from 'drizzle-orm'
 import { db } from '../db/index.js'
 import { coachingProfiles } from '../db/schema.js'
+import { getUserId } from '../lib/user.js'
 
 const app = new Hono()
 
 // ---------- GET / -- Return the coaching profile ----------
 
 app.get('/', async (c) => {
-  const profile = await db.query.coachingProfiles.findFirst()
+  const userId = getUserId(c)
+  const profile = await db.query.coachingProfiles.findFirst({
+    where: eq(coachingProfiles.userId, userId),
+  })
 
   if (!profile) {
     // Return a default empty profile if none exists
@@ -40,6 +44,8 @@ app.get('/', async (c) => {
 // ---------- PUT / -- Upsert the coaching profile ----------
 
 app.put('/', async (c) => {
+  const userId = getUserId(c)
+
   let body: {
     biometrics?: Record<string, unknown>
     maxes?: Record<string, number>
@@ -55,7 +61,9 @@ app.put('/', async (c) => {
     return c.json({ error: 'Invalid JSON body' }, 400)
   }
 
-  const existing = await db.query.coachingProfiles.findFirst()
+  const existing = await db.query.coachingProfiles.findFirst({
+    where: eq(coachingProfiles.userId, userId),
+  })
 
   const values = {
     biometrics: JSON.stringify(body.biometrics ?? {}),
@@ -74,12 +82,14 @@ app.put('/', async (c) => {
       .set(values)
       .where(eq(coachingProfiles.id, existing.id))
   } else {
-    // Insert new profile
-    await db.insert(coachingProfiles).values(values)
+    // Insert new profile for this user
+    await db.insert(coachingProfiles).values({ ...values, userId })
   }
 
   // Return the updated profile
-  const updated = await db.query.coachingProfiles.findFirst()
+  const updated = await db.query.coachingProfiles.findFirst({
+    where: eq(coachingProfiles.userId, userId),
+  })
   return c.json({
     id: updated!.id,
     biometrics: JSON.parse(updated!.biometrics),

@@ -30,6 +30,12 @@ if (authMiddleware) {
     }
     return authMiddleware(c, next)
   })
+} else {
+  // Dev mode: set a fake user so getUserId() works without JWT_SECRET
+  app.use('/api/*', async (c, next) => {
+    ;(c as any).set('user', { sub: 'dev-user-00000000-0000-0000-0000-000000000000' })
+    await next()
+  })
 }
 
 // ---------- GoTrue Auth Proxy ----------

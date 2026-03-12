@@ -130,26 +130,42 @@ export function daysBetween(dateA: string, dateB: string): number {
  */
 export async function retrieveRelevantSessions(
   query: string,
-  topK: number = 5
+  topK: number = 5,
+  userId?: string
 ): Promise<RetrievedSession[]> {
   const today = new Date().toISOString().split('T')[0]
   const queryEmbedding = await generateEmbedding(query)
   const vectorStr = `[${queryEmbedding.join(',')}]`
 
-  const raw = await db.execute(sql`
-    SELECT
-      embedding_id,
-      document,
-      date,
-      type,
-      exercises_csv,
-      muscle_groups_csv,
-      1 - (embedding <=> ${vectorStr}::vector) AS similarity
-    FROM coaching_embeddings
-    WHERE embedding IS NOT NULL
-    ORDER BY embedding <=> ${vectorStr}::vector
-    LIMIT ${topK * 2}
-  `)
+  const raw = userId
+    ? await db.execute(sql`
+        SELECT
+          embedding_id,
+          document,
+          date,
+          type,
+          exercises_csv,
+          muscle_groups_csv,
+          1 - (embedding <=> ${vectorStr}::vector) AS similarity
+        FROM coaching_embeddings
+        WHERE embedding IS NOT NULL AND user_id = ${userId}
+        ORDER BY embedding <=> ${vectorStr}::vector
+        LIMIT ${topK * 2}
+      `)
+    : await db.execute(sql`
+        SELECT
+          embedding_id,
+          document,
+          date,
+          type,
+          exercises_csv,
+          muscle_groups_csv,
+          1 - (embedding <=> ${vectorStr}::vector) AS similarity
+        FROM coaching_embeddings
+        WHERE embedding IS NOT NULL
+        ORDER BY embedding <=> ${vectorStr}::vector
+        LIMIT ${topK * 2}
+      `)
 
   if (!raw.length) return []
 
@@ -191,7 +207,8 @@ export async function retrieveRelevantSessions(
 export async function embedAndStore(
   userMessage: string,
   aiResponse: string,
-  metadata: Record<string, unknown>
+  metadata: Record<string, unknown>,
+  userId?: string
 ): Promise<void> {
   const combined = `User: ${userMessage}\n\nCoach: ${aiResponse}`
   const date = (metadata.date as string) || new Date().toISOString().split('T')[0]
@@ -202,8 +219,9 @@ export async function embedAndStore(
   const vectorStr = `[${embedding.join(',')}]`
 
   await db.execute(sql`
-    INSERT INTO coaching_embeddings (embedding_id, document, embedding, date, type, exercises_csv, muscle_groups_csv)
+    INSERT INTO coaching_embeddings (user_id, embedding_id, document, embedding, date, type, exercises_csv, muscle_groups_csv)
     VALUES (
+      ${userId || 'unknown'},
       ${embeddingId},
       ${combined},
       ${vectorStr}::vector,

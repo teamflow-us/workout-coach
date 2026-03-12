@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { db } from '../db/index.js'
 import { foodLog, nutritionGoals, favoriteFoods } from '../db/schema.js'
 import { searchFood, scanBarcode } from '../lib/nutrition.js'
+import { getUserId } from '../lib/user.js'
 import type { MealType, DailyTotals } from '../../shared/types/nutrition.js'
 
 const app = new Hono()
@@ -80,12 +81,13 @@ app.get('/barcode/:code', async (c) => {
  * GET /log?date=YYYY-MM-DD - Get day's food log entries (default today)
  */
 app.get('/log', async (c) => {
+  const userId = getUserId(c)
   const date = c.req.query('date') || new Date().toISOString().slice(0, 10)
 
   const entries = await db
     .select()
     .from(foodLog)
-    .where(eq(foodLog.loggedAt, date))
+    .where(and(eq(foodLog.userId, userId), eq(foodLog.loggedAt, date)))
     .orderBy(desc(foodLog.createdAt))
 
   return c.json(entries)
@@ -95,6 +97,8 @@ app.get('/log', async (c) => {
  * POST /log - Add food log entry + upsert into favorites
  */
 app.post('/log', async (c) => {
+  const userId = getUserId(c)
+
   let body: unknown
   try {
     body = await c.req.json()
@@ -117,6 +121,7 @@ app.post('/log', async (c) => {
     const [entry] = await tx
       .insert(foodLog)
       .values({
+        userId,
         loggedAt: data.loggedAt,
         mealType: data.mealType,
         foodName: data.foodName,
@@ -141,6 +146,7 @@ app.post('/log', async (c) => {
       .from(favoriteFoods)
       .where(
         and(
+          eq(favoriteFoods.userId, userId),
           eq(favoriteFoods.source, data.source),
           eq(favoriteFoods.sourceId, data.sourceId),
         )
@@ -153,6 +159,7 @@ app.post('/log', async (c) => {
     } else {
       await tx.insert(favoriteFoods)
         .values({
+          userId,
           foodName: data.foodName,
           brand: data.brand ?? null,
           servingSize: data.servingSize ?? null,
@@ -178,6 +185,8 @@ app.post('/log', async (c) => {
  * POST /quick-add - Quick-add food with background Gemini enrichment
  */
 app.post('/quick-add', async (c) => {
+  const userId = getUserId(c)
+
   let body: unknown
   try {
     body = await c.req.json()
@@ -205,6 +214,7 @@ app.post('/quick-add', async (c) => {
   const [entry] = await db
     .insert(foodLog)
     .values({
+      userId,
       loggedAt,
       mealType,
       foodName,
@@ -263,6 +273,7 @@ app.post('/quick-add', async (c) => {
  * DELETE /log/:id - Delete a food log entry
  */
 app.delete('/log/:id', async (c) => {
+  const userId = getUserId(c)
   const id = Number(c.req.param('id'))
 
   if (isNaN(id)) {
@@ -272,13 +283,13 @@ app.delete('/log/:id', async (c) => {
   const [existing] = await db
     .select()
     .from(foodLog)
-    .where(eq(foodLog.id, id))
+    .where(and(eq(foodLog.id, id), eq(foodLog.userId, userId)))
 
   if (!existing) {
     return c.json({ error: 'Log entry not found' }, 404)
   }
 
-  await db.delete(foodLog).where(eq(foodLog.id, id))
+  await db.delete(foodLog).where(and(eq(foodLog.id, id), eq(foodLog.userId, userId)))
 
   return c.json({ success: true })
 })
@@ -287,12 +298,13 @@ app.delete('/log/:id', async (c) => {
  * GET /totals?date=YYYY-MM-DD - Aggregated daily macro totals grouped by meal
  */
 app.get('/totals', async (c) => {
+  const userId = getUserId(c)
   const date = c.req.query('date') || new Date().toISOString().slice(0, 10)
 
   const entries = await db
     .select()
     .from(foodLog)
-    .where(eq(foodLog.loggedAt, date))
+    .where(and(eq(foodLog.userId, userId), eq(foodLog.loggedAt, date)))
 
   const totals: DailyTotals = {
     calories: 0,
@@ -336,7 +348,12 @@ app.get('/totals', async (c) => {
  * GET /goals - Get macro goals (return defaults if none set)
  */
 app.get('/goals', async (c) => {
-  const [goals] = await db.select().from(nutritionGoals)
+  const userId = getUserId(c)
+
+  const [goals] = await db
+    .select()
+    .from(nutritionGoals)
+    .where(eq(nutritionGoals.userId, userId))
 
   if (!goals) {
     return c.json({
@@ -361,6 +378,8 @@ app.get('/goals', async (c) => {
  * PUT /goals - Create or update macro goals
  */
 app.put('/goals', async (c) => {
+  const userId = getUserId(c)
+
   let body: unknown
   try {
     body = await c.req.json()
@@ -377,7 +396,10 @@ app.put('/goals', async (c) => {
   }
 
   const data = parsed.data
-  const [existing] = await db.select().from(nutritionGoals)
+  const [existing] = await db
+    .select()
+    .from(nutritionGoals)
+    .where(eq(nutritionGoals.userId, userId))
 
   const values = {
     caloriesTarget: data.caloriesTarget,
@@ -394,7 +416,7 @@ app.put('/goals', async (c) => {
       .set(values)
       .where(eq(nutritionGoals.id, existing.id))
   } else {
-    await db.insert(nutritionGoals).values(values)
+    await db.insert(nutritionGoals).values({ ...values, userId })
   }
 
   return c.json(data)
@@ -404,9 +426,12 @@ app.put('/goals', async (c) => {
  * GET /favorites - Get top 20 frequently used foods by useCount
  */
 app.get('/favorites', async (c) => {
+  const userId = getUserId(c)
+
   const favorites = await db
     .select()
     .from(favoriteFoods)
+    .where(eq(favoriteFoods.userId, userId))
     .orderBy(desc(favoriteFoods.useCount))
     .limit(20)
 

@@ -1,6 +1,6 @@
 import { db } from '../db/index.js'
-import { workouts } from '../db/schema.js'
-import { desc } from 'drizzle-orm'
+import { workouts, coachingProfiles } from '../db/schema.js'
+import { desc, eq } from 'drizzle-orm'
 import { retrieveRelevantSessions, type RetrievedSession } from './rag.js'
 
 export interface BuildPromptResult {
@@ -17,12 +17,15 @@ export interface BuildPromptResult {
  * and includes them in the system prompt. Falls back to Phase 2 behavior
  * (profile + recent workouts only) if ChromaDB is unavailable.
  */
-export async function buildSystemPrompt(userMessage?: string): Promise<BuildPromptResult> {
-  // Load coaching profile (single-row table)
-  const profile = await db.query.coachingProfiles.findFirst()
+export async function buildSystemPrompt(userMessage?: string, userId?: string): Promise<BuildPromptResult> {
+  // Load coaching profile for this user
+  const profile = userId
+    ? await db.query.coachingProfiles.findFirst({ where: eq(coachingProfiles.userId, userId) })
+    : await db.query.coachingProfiles.findFirst()
 
   // Load last 5 workouts with full exercise/set detail
   const recentWorkouts = await db.query.workouts.findMany({
+    ...(userId ? { where: eq(workouts.userId, userId) } : {}),
     orderBy: [desc(workouts.date)],
     limit: 5,
     with: {
@@ -54,7 +57,7 @@ No profile set yet. Ask the user about their training background, current maxes,
 
   if (userMessage) {
     try {
-      const retrieved = await retrieveRelevantSessions(userMessage, 5)
+      const retrieved = await retrieveRelevantSessions(userMessage, 5, userId)
       if (retrieved.length > 0) {
         sources = retrieved.map((r) => ({
           date: (r.metadata.date as string) || 'Unknown date',

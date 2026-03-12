@@ -19,5 +19,5 @@ ENV PORT=3000
 
 EXPOSE 3000
 
-# Run schema push then start server
-CMD npx drizzle-kit push --force && npm start
+# Start server (schema is managed externally via setup.sql)
+CMD ["npm", "start"]
