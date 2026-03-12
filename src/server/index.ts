@@ -25,7 +25,7 @@ const authMiddleware = createAuthMiddleware()
 if (authMiddleware) {
   // Auth proxy routes must be accessible without a token
   app.use('/api/*', async (c, next) => {
-    if (c.req.path.startsWith('/api/auth/')) {
+    if (c.req.path.startsWith('/api/auth/') || c.req.path.startsWith('/api/health')) {
       return next()
     }
     return authMiddleware(c, next)
@@ -41,9 +41,16 @@ if (authMiddleware) {
 // ---------- GoTrue Auth Proxy ----------
 
 const GOTRUE_URL = process.env.GOTRUE_URL || 'http://supabase-auth:9999'
+const SUPABASE_ANON_KEY = process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY || ''
 
 async function gotrueProxy(url: string, init: RequestInit) {
   try {
+    // Inject apikey header when GoTrue is behind Kong/API gateway
+    if (SUPABASE_ANON_KEY) {
+      const headers = new Headers(init.headers)
+      if (!headers.has('apikey')) headers.set('apikey', SUPABASE_ANON_KEY)
+      init = { ...init, headers }
+    }
     return await fetch(url, init)
   } catch (err) {
     console.error(`GoTrue proxy error (${url}):`, err instanceof Error ? err.message : err)
