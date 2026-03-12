@@ -178,6 +178,98 @@ Message: "${message.replace(/"/g, '\\"')}"`
   }
 }
 
+/**
+ * Analyze a photo of food or a nutrition label using Gemini Vision.
+ * Returns identified food items with nutritional info.
+ */
+export async function analyzePhotoFood(
+  base64Image: string,
+  mimeType: string,
+): Promise<MacroData[]> {
+  if (!GEMINI_API_KEY) {
+    console.error('GEMINI_API_KEY not set')
+    return []
+  }
+
+  const prompt = `Analyze this image. It could be either:
+1. A photo of food/drink - identify what it is and estimate nutritional information
+2. A photo of a nutrition facts label - extract the exact nutritional data from the label
+
+Return a JSON array of food items found. For each item include:
+- name: the food name (be specific, e.g. "Grilled Chicken Breast" not just "chicken")
+- brand: brand name if visible on packaging/label, otherwise null
+- servingSize: a human-readable serving size string (from the label if visible, otherwise estimate e.g. "1 cup (240ml)", "1 medium (118g)")
+- servingWeight: serving weight in grams as a number, or null if unknown
+- calories: calories per serving
+- protein: grams of protein per serving
+- carbs: grams of carbs per serving
+- fat: grams of fat per serving
+- fiber: grams of fiber per serving
+- sugar: grams of sugar per serving
+- sodium: milligrams of sodium per serving
+
+If this is a nutrition label photo, extract the EXACT values shown on the label.
+If this is a food photo, provide your best nutritional estimates for a typical serving.
+If you can identify multiple distinct food items in the photo, list each separately.
+
+IMPORTANT: Return ONLY a valid JSON array, no markdown, no code fences, no explanation.`
+
+  try {
+    const res = await fetch(GEMINI_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { text: prompt },
+            {
+              inlineData: {
+                mimeType,
+                data: base64Image,
+              },
+            },
+          ],
+        }],
+        generationConfig: {
+          temperature: 0.1,
+          responseMimeType: 'application/json',
+        },
+      }),
+    })
+
+    if (!res.ok) {
+      console.error('Gemini Vision API error:', res.status, await res.text())
+      return []
+    }
+
+    const data = await res.json()
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text
+    if (!text) return []
+
+    const parsed = JSON.parse(text)
+    const items = Array.isArray(parsed) ? parsed : []
+
+    return items.map((item: Record<string, unknown>, i: number) => ({
+      name: String(item.name || 'Unknown'),
+      brand: item.brand ? String(item.brand) : null,
+      servingSize: item.servingSize ? String(item.servingSize) : null,
+      servingWeight: typeof item.servingWeight === 'number' ? item.servingWeight : null,
+      calories: Number(item.calories) || 0,
+      protein: Number(item.protein) || 0,
+      carbs: Number(item.carbs) || 0,
+      fat: Number(item.fat) || 0,
+      fiber: Number(item.fiber) || 0,
+      sugar: Number(item.sugar) || 0,
+      sodium: Number(item.sodium) || 0,
+      source: 'gemini' as const,
+      sourceId: `gemini-photo-${Date.now()}-${i}`,
+    }))
+  } catch (err) {
+    console.error('Gemini Vision error:', err)
+    return []
+  }
+}
+
 // Keep barcode scanning via Open Food Facts (Gemini can't look up barcodes)
 function parseOFFNutrients(product: Record<string, unknown>): {
   calories: number; protein: number; carbs: number; fat: number

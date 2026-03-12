@@ -3,7 +3,7 @@ import { eq, desc, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '../db/index.js'
 import { foodLog, nutritionGoals, favoriteFoods } from '../db/schema.js'
-import { searchFood, scanBarcode } from '../lib/nutrition.js'
+import { searchFood, scanBarcode, analyzePhotoFood } from '../lib/nutrition.js'
 import { getUserId } from '../lib/user.js'
 import type { MealType, DailyTotals } from '../../shared/types/nutrition.js'
 
@@ -263,6 +263,122 @@ app.post('/quick-add', async (c) => {
     .catch(async () => {
       await db.update(foodLog)
         .set({ status: 'failed' })
+        .where(eq(foodLog.id, entry.id))
+    })
+
+  return c.json(entry, 201)
+})
+
+/**
+ * POST /photo-add - Identify food from a photo and log it
+ */
+app.post('/photo-add', async (c) => {
+  const userId = getUserId(c)
+
+  let body: unknown
+  try {
+    body = await c.req.json()
+  } catch {
+    return c.json({ error: 'Invalid JSON body' }, 400)
+  }
+
+  const schema = z.object({
+    image: z.string().min(1),
+    mimeType: z.string().regex(/^image\/(jpeg|png|webp|gif)$/),
+    mealType: z.enum(mealTypes),
+    loggedAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD'),
+  })
+
+  const parsed = schema.safeParse(body)
+  if (!parsed.success) {
+    return c.json(
+      { error: 'Validation failed', details: parsed.error.format() },
+      400
+    )
+  }
+
+  const { image, mimeType, mealType, loggedAt } = parsed.data
+
+  // Insert a pending entry with a placeholder name
+  const [entry] = await db
+    .insert(foodLog)
+    .values({
+      userId,
+      loggedAt,
+      mealType,
+      foodName: 'Analyzing photo...',
+      brand: null,
+      servingSize: null,
+      servings: 1,
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+      fiber: 0,
+      sugar: 0,
+      sodium: 0,
+      source: 'gemini',
+      sourceId: `photo-${Date.now()}`,
+      status: 'pending',
+    })
+    .returning()
+
+  // Fire-and-forget: analyze with Gemini Vision in background
+  analyzePhotoFood(image, mimeType)
+    .then(async (results) => {
+      if (results.length > 0) {
+        const best = results[0]
+        await db.update(foodLog)
+          .set({
+            foodName: best.name,
+            calories: best.calories,
+            protein: best.protein,
+            carbs: best.carbs,
+            fat: best.fat,
+            fiber: best.fiber,
+            sugar: best.sugar,
+            sodium: best.sodium,
+            brand: best.brand,
+            servingSize: best.servingSize,
+            sourceId: best.sourceId,
+            status: 'complete',
+          })
+          .where(eq(foodLog.id, entry.id))
+
+        // Log additional items if multiple foods detected
+        if (results.length > 1) {
+          for (let i = 1; i < results.length; i++) {
+            const item = results[i]
+            await db.insert(foodLog).values({
+              userId,
+              loggedAt,
+              mealType,
+              foodName: item.name,
+              brand: item.brand,
+              servingSize: item.servingSize,
+              servings: 1,
+              calories: item.calories,
+              protein: item.protein,
+              carbs: item.carbs,
+              fat: item.fat,
+              fiber: item.fiber,
+              sugar: item.sugar,
+              sodium: item.sodium,
+              source: 'gemini',
+              sourceId: item.sourceId,
+              status: 'complete',
+            })
+          }
+        }
+      } else {
+        await db.update(foodLog)
+          .set({ foodName: 'Unrecognized food', status: 'failed' })
+          .where(eq(foodLog.id, entry.id))
+      }
+    })
+    .catch(async () => {
+      await db.update(foodLog)
+        .set({ foodName: 'Photo analysis failed', status: 'failed' })
         .where(eq(foodLog.id, entry.id))
     })
 

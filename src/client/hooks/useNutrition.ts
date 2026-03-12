@@ -161,6 +161,48 @@ export function useNutrition(date: string) {
     }
   }, [date])
 
+  const photoAdd = useCallback(async (mealType: MealType, image: string, mimeType: string) => {
+    const tempEntry: FoodLogEntry = {
+      id: -Date.now(),
+      loggedAt: date,
+      mealType,
+      foodName: 'Analyzing photo...',
+      brand: null,
+      servingSize: null,
+      servings: 1,
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+      fiber: 0,
+      sugar: 0,
+      sodium: 0,
+      source: 'gemini',
+      sourceId: `photo-${Date.now()}`,
+      status: 'pending',
+    }
+
+    setEntries((prev) => [tempEntry, ...prev])
+
+    try {
+      const res = await apiFetch('/api/nutrition/photo-add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image, mimeType, mealType, loggedAt: date }),
+      })
+
+      if (!res.ok) throw new Error(`Failed: ${res.status}`)
+
+      const created: FoodLogEntry = await res.json()
+      setEntries((prev) =>
+        prev.map((e) => (e.id === tempEntry.id ? created : e))
+      )
+    } catch (err) {
+      console.error('Photo add failed:', err)
+      setEntries((prev) => prev.filter((e) => e.id !== tempEntry.id))
+    }
+  }, [date])
+
   const deleteEntry = useCallback(async (id: number) => {
     try {
       const res = await apiFetch(`/api/nutrition/log/${id}`, { method: 'DELETE' })
@@ -186,6 +228,7 @@ export function useNutrition(date: string) {
     loading,
     addEntry,
     quickAdd,
+    photoAdd,
     deleteEntry,
     entriesForMeal,
     mealCalories,

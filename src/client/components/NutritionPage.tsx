@@ -32,7 +32,7 @@ function displayDate(dateStr: string): string {
 
 export default function NutritionPage() {
   const [date, setDate] = useState(() => formatDate(new Date()))
-  const { totals, goals, loading, quickAdd, deleteEntry, entriesForMeal, mealCalories } = useNutrition(date)
+  const { totals, goals, loading, quickAdd, photoAdd, deleteEntry, entriesForMeal, mealCalories } = useNutrition(date)
 
   const handlePrevDay = useCallback(() => {
     setDate((prev) => {
@@ -140,7 +140,7 @@ export default function NutritionPage() {
                   </div>
                 )}
 
-                <QuickAddInput mealType={type} onAdd={quickAdd} />
+                <QuickAddInput mealType={type} onAdd={quickAdd} onPhotoAdd={photoAdd} />
               </div>
             )
           })}
