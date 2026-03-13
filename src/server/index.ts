@@ -147,6 +147,10 @@ app.route('/api/nutrition', nutritionRoutes)
 // Serve static client build in production
 app.use('/assets/*', serveStatic({ root: './dist/client' }))
 app.use('/favicon.ico', serveStatic({ root: './dist/client' }))
+app.use('/favicon.svg', serveStatic({ root: './dist/client' }))
+app.use('/manifest.webmanifest', serveStatic({ root: './dist/client' }))
+app.use('/sw.js', serveStatic({ root: './dist/client' }))
+app.use('/icon-*.svg', serveStatic({ root: './dist/client' }))
 
 // SPA fallback: serve index.html for all non-API routes
 app.get('*', serveStatic({ root: './dist/client', path: '/index.html' }))
