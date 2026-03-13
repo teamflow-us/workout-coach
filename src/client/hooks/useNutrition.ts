@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import type { FoodLogEntry, NutritionGoals, DailyTotals, MealType, MacroData } from '../../shared/types/nutrition.js'
 import { apiFetch } from '../lib/apiFetch'
 
@@ -31,7 +31,6 @@ export function useNutrition(date: string) {
   const [totals, setTotals] = useState<DailyTotals>(EMPTY_TOTALS)
   const [goals, setGoals] = useState<NutritionGoals>(DEFAULT_GOALS)
   const [loading, setLoading] = useState(true)
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const fetchData = useCallback(async () => {
     try {
@@ -66,22 +65,10 @@ export function useNutrition(date: string) {
   // Poll when any entry is pending
   useEffect(() => {
     const hasPending = entries.some((e) => e.status === 'pending')
+    if (!hasPending) return
 
-    if (hasPending && !pollRef.current) {
-      pollRef.current = setInterval(() => {
-        fetchData()
-      }, 3000)
-    } else if (!hasPending && pollRef.current) {
-      clearInterval(pollRef.current)
-      pollRef.current = null
-    }
-
-    return () => {
-      if (pollRef.current) {
-        clearInterval(pollRef.current)
-        pollRef.current = null
-      }
-    }
+    const id = setInterval(fetchData, 3000)
+    return () => clearInterval(id)
   }, [entries, fetchData])
 
   const addEntry = useCallback(async (mealType: MealType, food: MacroData, servings: number) => {
@@ -149,11 +136,15 @@ export function useNutrition(date: string) {
 
       if (!res.ok) throw new Error(`Failed: ${res.status}`)
 
-      // Replace temp entry with real server entry
+      // Replace temp entry with real server entry (handle race with poll)
       const created: FoodLogEntry = await res.json()
-      setEntries((prev) =>
-        prev.map((e) => (e.id === tempEntry.id ? created : e))
-      )
+      setEntries((prev) => {
+        const hasTemp = prev.some((e) => e.id === tempEntry.id)
+        const hasCreated = prev.some((e) => e.id === created.id)
+        if (hasTemp) return prev.map((e) => (e.id === tempEntry.id ? created : e))
+        if (!hasCreated) return [created, ...prev]
+        return prev
+      })
     } catch (err) {
       console.error('Quick add failed:', err)
       // Remove the optimistic entry on failure
@@ -194,9 +185,15 @@ export function useNutrition(date: string) {
       if (!res.ok) throw new Error(`Failed: ${res.status}`)
 
       const created: FoodLogEntry = await res.json()
-      setEntries((prev) =>
-        prev.map((e) => (e.id === tempEntry.id ? created : e))
-      )
+      // The temp entry may have been removed by a poll that fired while the
+      // large image was uploading. Handle all cases:
+      setEntries((prev) => {
+        const hasTemp = prev.some((e) => e.id === tempEntry.id)
+        const hasCreated = prev.some((e) => e.id === created.id)
+        if (hasTemp) return prev.map((e) => (e.id === tempEntry.id ? created : e))
+        if (!hasCreated) return [created, ...prev]
+        return prev
+      })
     } catch (err) {
       console.error('Photo add failed:', err)
       setEntries((prev) => prev.filter((e) => e.id !== tempEntry.id))
